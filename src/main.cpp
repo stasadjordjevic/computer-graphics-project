@@ -25,7 +25,7 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
-bvdfjvbdj
+
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
@@ -165,8 +165,13 @@ int main() {
 
     // load models
     // -----------
-    Model ourModel("resources/objects/backpack/backpack.obj");
+//    Model ourModel1("resources/objects/backpack/backpack.obj");
+//    Model ourModel("resources/objects/Cyclist - racing position - free 3d printable/source/Cyclist/Racing cyclist 03.fbx"); UCITAVANJE BICIKLISTE
+    Model ourModel("resources/objects/house/Cottage_FREE.obj");
+
+
     ourModel.SetShaderTextureNamePrefix("material.");
+//    ourModel1.SetShaderTextureNamePrefix("material.");
 
     PointLight& pointLight = programState->pointLight;
     pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
@@ -204,7 +209,8 @@ int main() {
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
-        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
+//        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame)); zakomentarisati ako hocemo konstantno svetlo
+        pointLight.position = glm::vec3(4.0f, 4.0f, 4.0f);
         ourShader.setVec3("pointLight.position", pointLight.position);
         ourShader.setVec3("pointLight.ambient", pointLight.ambient);
         ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
@@ -228,6 +234,8 @@ int main() {
         model = glm::scale(model, glm::vec3(programState->backpackScale));    // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
+//        ourModel1.Draw(ourShader);
+
 
         if (programState->ImGuiEnabled)
             DrawImGui(programState);

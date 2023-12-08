@@ -6,7 +6,7 @@
 # It is included in the main 'build.ninja'.
 
 # =============================================================================
-# Project: project_base
+# Project: computer_graphics-project
 # Configurations: Debug
 # =============================================================================
 # =============================================================================
@@ -33,7 +33,7 @@ rule CXX_STATIC_LIBRARY_LINKER__STB_IMAGE_Debug
 #############################################
 # Rule for compiling CXX files.
 
-rule CXX_COMPILER__project_base_unscanned_Debug
+rule CXX_COMPILER__computer_graphics-project_unscanned_Debug
   depfile = $DEP_FILE
   deps = gcc
   command = /usr/bin/c++ $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
@@ -43,7 +43,7 @@ rule CXX_COMPILER__project_base_unscanned_Debug
 #############################################
 # Rule for linking CXX executable.
 
-rule CXX_EXECUTABLE_LINKER__project_base_Debug
+rule CXX_EXECUTABLE_LINKER__computer_graphics-project_Debug
   command = $PRE_LINK && /usr/bin/c++ $FLAGS $LINK_FLAGS $in -o $TARGET_FILE $LINK_PATH $LINK_LIBRARIES && $POST_BUILD
   description = Linking CXX executable $TARGET_FILE
   restat = $RESTAT
@@ -99,7 +99,7 @@ rule CXX_STATIC_LIBRARY_LINKER__imgui_Debug
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = /home/stasa/Desktop/instalacija/CLion-2023.2.2/clion-2023.2.2/bin/cmake/linux/x64/bin/cmake --regenerate-during-build -S/home/stasa/Desktop/projekat_RG/project_base -B/home/stasa/Desktop/projekat_RG/project_base/cmake-build-debug
+  command = /home/stasa/Desktop/instalacija/CLion-2023.2.2/clion-2023.2.2/bin/cmake/linux/x64/bin/cmake --regenerate-during-build -S/home/stasa/Desktop/projekatRG/computer-graphics-project -B/home/stasa/Desktop/projekatRG/computer-graphics-project/cmake-build-debug
   description = Re-running CMake...
   generator = 1
 

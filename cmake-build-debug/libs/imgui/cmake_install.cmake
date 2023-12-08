@@ -1,4 +1,4 @@
-# Install script for directory: /home/stasa/Desktop/projekat_RG/project_base/libs/imgui
+# Install script for directory: /home/stasa/Desktop/projekatRG/computer-graphics-project/libs/imgui
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
