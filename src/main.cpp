@@ -54,6 +54,16 @@ struct PointLight {
     float quadratic;
 };
 
+
+struct DirLight {
+    glm::vec3 direction;
+
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+};
+
+
 struct ProgramState {
     glm::vec3 clearColor = glm::vec3(0);
     bool ImGuiEnabled = false;
@@ -248,7 +258,7 @@ int main() {
     // --------------------
     ourShader.use();
 
-//    ourShader.setInt("????", 0); ne znam sta mi je ovo
+//    ourShader.setInt("????", 0); //ne znam sta mi je ovo
 
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
@@ -256,29 +266,23 @@ int main() {
     //END
     // load models
     // -----------
-//    Model ourModel("resources/objects/backpack/backpack.obj");
-    Model ourModel("resources/objects/fishing-boat/source/model/model.dae");
+    Model ourModel("resources/objects/backpack/backpack.obj");
+//    Model ourModel("resources/objects/boat1/Boat.obj");
+//    Model ourModel("resources/objects/boat/source/Boat.obj");
+//    Model ourModel("resources/objects/fishing-boat/source/model/model.dae");
 
     ourModel.SetShaderTextureNamePrefix("material.");
 
-    PointLight& pointLight = programState->pointLight;
-    // default vrednosti su zakomentarisane, ja sam postavila neke svoje
-//    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
-//    pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
+    //videti da li su dobre koordinate tackastog osvetljenja
+//    PointLight& pointLight = programState->pointLight;
+//    pointLight.position = glm::vec3(-4.0f, -4.0, 5.0);
+//    pointLight.ambient = glm::vec3(1.0, 1.0, 1.0);
 //    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
 //    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 //
 //    pointLight.constant = 1.0f;
 //    pointLight.linear = 0.09f;
 //    pointLight.quadratic = 0.032f;
-    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
-    pointLight.ambient = glm::vec3(1.0, 1.0, 1.0);
-    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
-    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
-
-    pointLight.constant = 1.0f;
-    pointLight.linear = 0.09f;
-    pointLight.quadratic = 0.032f;
 
 
     // draw in wireframe
@@ -306,15 +310,38 @@ int main() {
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
-//        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame)); TODO zakomentarisati ako hocemo konstantno svetlo
-        pointLight.position = glm::vec3(2.0f, 2.0f, 2.0f);
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+//        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));// TODO zakomentarisati ako hocemo konstantno svetlo
+//        pointLight.position = glm::vec3(2.0f, 2.0f, 2.0f);
+//        ourShader.setVec3("pointLight.position", pointLight.position);
+//        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
+//        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+//        ourShader.setVec3("pointLight.specular", pointLight.specular);
+//        ourShader.setFloat("pointLight.constant", pointLight.constant);
+//        ourShader.setFloat("pointLight.linear", pointLight.linear);
+//        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
+
+//        ourShader.setVec3("pointLight.position", pointLight.position);
+//        ourShader.setVec3("pointLight.ambient", 0.01f, 0.01f, 0.01f);
+//        ourShader.setVec3("pointLight.diffuse", 0.8f, 0.8f, 0.8f);
+//        ourShader.setVec3("pointLight.specular", 1.0f, 1.0f, 1.0f);
+//        ourShader.setFloat("pointLight.constant", 1.0f);
+//        ourShader.setFloat("pointLight.linear", 0.05f);
+//        ourShader.setFloat("pointLight.quadratic", 0.012f);
+
+        // directional light setup
+        ourShader.setVec3("dirLight.direction", 1.0f, -0.5f, 0.0f);
+        ourShader.setVec3("dirLight.ambient", 0.01f, 0.01f, 0.01f);
+        ourShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+        ourShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
+
+//        ourShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+//        ourShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+//        ourShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+//        ourShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+
+
+
         ourShader.setVec3("viewPosition", programState->camera.Position);
         ourShader.setFloat("material.shininess", 32.0f);
         // view/projection transformations
@@ -329,6 +356,8 @@ int main() {
         model = glm::translate(model,
                                programState->backpackPosition); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(programState->backpackScale));    // it's a bit too big for our scene, so scale it down
+//        model = glm::translate(model,glm::vec3(0.0f,0.0f,0.0f));
+//        model = glm::scale(model, glm::vec3(1.0f,1.0f,1.0f));
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
 
@@ -433,12 +462,12 @@ void DrawImGui(ProgramState *programState) {
         ImGui::Begin("Hello window");
         ImGui::Text("Hello text");
         ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
-        ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
+        ImGui::ColorEdit3("Background color", (float   *) &programState->clearColor);
         ImGui::DragFloat3("Backpack position", (float*)&programState->backpackPosition);
         ImGui::DragFloat("Backpack scale", &programState->backpackScale, 0.05, 0.1, 4.0);
 
         ImGui::DragFloat("pointLight.constant", &programState->pointLight.constant, 0.05, 0.0, 1.0);
-        ImGui::DragFloat("pointLight.linear", &programState->pointLight.linear, 0.05, 0.0, 1.0);
+        ImGui::DragFloat("pointLight.line ar", &programState->pointLight.linear, 0.05, 0.0, 1.0);
         ImGui::DragFloat("pointLight.quadratic", &programState->pointLight.quadratic, 0.05, 0.0, 1.0);
         ImGui::End();
     }
