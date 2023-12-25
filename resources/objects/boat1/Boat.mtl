@@ -1,6 +1,7 @@
 # Blender MTL File: 'None'
 # Material Count: 1
 
+# Mora se poklapati ime dato sa newmtl na svim mesevima u Boat.obj (tj. usemtl Scene_-_Root)
 newmtl Scene_-_Root
 Ns 225.000000
 Ka 1.000000 1.000000 1.000000
