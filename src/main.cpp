@@ -148,7 +148,7 @@ int main() {
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetKeyCallback(window, key_callback);
     // tell GLFW to capture our mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -266,23 +266,24 @@ int main() {
     //END
     // load models
     // -----------
-    Model ourModel("resources/objects/backpack/backpack.obj");
-//    Model ourModel("resources/objects/boat1/Boat.obj");
+    stbi_set_flip_vertically_on_load(true);
+//    Model ourModel("resources/objects/backpack/backpack.obj");
+    Model ourModel("resources/objects/boat1/Boat.obj");
 //    Model ourModel("resources/objects/boat/source/Boat.obj");
 //    Model ourModel("resources/objects/fishing-boat/source/model/model.dae");
 
     ourModel.SetShaderTextureNamePrefix("material.");
 
     //videti da li su dobre koordinate tackastog osvetljenja
-//    PointLight& pointLight = programState->pointLight;
-//    pointLight.position = glm::vec3(-4.0f, -4.0, 5.0);
-//    pointLight.ambient = glm::vec3(1.0, 1.0, 1.0);
-//    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
-//    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
-//
-//    pointLight.constant = 1.0f;
-//    pointLight.linear = 0.09f;
-//    pointLight.quadratic = 0.032f;
+    PointLight& pointLight = programState->pointLight;
+    pointLight.position = glm::vec3(-4.0f, -4.0, 5.0);
+    pointLight.ambient = glm::vec3(1.0, 1.0, 1.0);
+    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
+    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
+
+    pointLight.constant = 1.0f;
+    pointLight.linear = 0.09f;
+    pointLight.quadratic = 0.032f;
 
 
     // draw in wireframe
@@ -310,36 +311,22 @@ int main() {
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
-//        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));// TODO zakomentarisati ako hocemo konstantno svetlo
-//        pointLight.position = glm::vec3(2.0f, 2.0f, 2.0f);
-//        ourShader.setVec3("pointLight.position", pointLight.position);
-//        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-//        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-//        ourShader.setVec3("pointLight.specular", pointLight.specular);
-//        ourShader.setFloat("pointLight.constant", pointLight.constant);
-//        ourShader.setFloat("pointLight.linear", pointLight.linear);
-//        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));// TODO zakomentarisati ako hocemo konstantno svetlo
+        pointLight.position = glm::vec3(2.0f, 2.0f, 2.0f);
+        ourShader.setVec3("pointLight.position", pointLight.position);
+        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
+        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        ourShader.setVec3("pointLight.specular", pointLight.specular);
+        ourShader.setFloat("pointLight.constant", pointLight.constant);
+        ourShader.setFloat("pointLight.linear", pointLight.linear);
+        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
 
-
-//        ourShader.setVec3("pointLight.position", pointLight.position);
-//        ourShader.setVec3("pointLight.ambient", 0.01f, 0.01f, 0.01f);
-//        ourShader.setVec3("pointLight.diffuse", 0.8f, 0.8f, 0.8f);
-//        ourShader.setVec3("pointLight.specular", 1.0f, 1.0f, 1.0f);
-//        ourShader.setFloat("pointLight.constant", 1.0f);
-//        ourShader.setFloat("pointLight.linear", 0.05f);
-//        ourShader.setFloat("pointLight.quadratic", 0.012f);
 
         // directional light setup
         ourShader.setVec3("dirLight.direction", 1.0f, -0.5f, 0.0f);
-        ourShader.setVec3("dirLight.ambient", 0.01f, 0.01f, 0.01f);
-        ourShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+        ourShader.setVec3("dirLight.ambient", 1.0f, 1.0f, 1.0f);
+        ourShader.setVec3("dirLight.diffuse", 1.0f, 1.0f, 1.0f);
         ourShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
-
-//        ourShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-//        ourShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-//        ourShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-//        ourShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
-
 
 
         ourShader.setVec3("viewPosition", programState->camera.Position);
