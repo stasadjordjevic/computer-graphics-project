@@ -69,12 +69,11 @@ struct ProgramState {
     bool ImGuiEnabled = false;
     Camera camera;
     bool CameraMouseMovementUpdateEnabled = true;
-    glm::vec3 backpackPosition = glm::vec3(40.0f,0.5f,30.0f);
+    glm::vec3 backpackPosition = glm::vec3(40.0f,0.5f,100.0f);
     float backpackScale = 3.0f;
     PointLight pointLight;
-    ProgramState()
-            : camera(glm::vec3(19.6156,1.62087,8.68573)) {} //pozicija kamere
-
+//    ProgramState(): camera(glm::vec3(19.6156,1.62087,8.68573)) {} //pozicija kamere
+    ProgramState(): camera(glm::vec3(0.0,0.0,100.0)) {} //pozicija kamere
     void SaveToFile(std::string filename);
     void LoadFromFile(std::string filename);
 };
@@ -103,20 +102,42 @@ void ProgramState::SaveToFile(std::string filename) {
 }
 
 void ProgramState::LoadFromFile(std::string filename) {
-    std::ifstream in(filename);
-    if (in) {
-        in >> clearColor.r
-           >> clearColor.g
-           >> clearColor.b
-           >> ImGuiEnabled
-           >> camera.Position.x
-           >> camera.Position.y
-           >> camera.Position.z
-           >> camera.Front.x
-           >> camera.Front.y
-           >> camera.Front.z;
-    }
+//    std::ifstream in(filename);
+//    if (in) {
+//        in >> clearColor.r
+//           >> clearColor.g
+//           >> clearColor.b
+//           >> ImGuiEnabled
+//           >> camera.Position.x
+//           >> camera.Position.y
+//           >> camera.Position.z
+//           >> camera.Front.x
+//           >> camera.Front.y
+//           >> camera.Front.z;
+//    }
+    clearColor.r=0.813725;
+    clearColor.g=0.678105;
+    clearColor.b=0.678105;
+    ImGuiEnabled=1;
+    camera.Position.x=19.6156;
+    camera.Position.y=1.62087;
+    camera.Position.z=8.68573;
+
+//    ovako treba da mi bude camera front da bi gledalo ka vodi
+    camera.Front.x=0.744385;
+    camera.Front.y=0.0540787;
+    camera.Front.z=0.665557;
 }
+//0.813725
+//0.678105
+//0.678105
+//0
+//19.6156
+//1.62087
+//8.68573
+//0.744385
+//0.0540787
+//0.665557
 
 ProgramState *programState;
 
@@ -266,7 +287,7 @@ int main() {
     //END
     // load models
     // -----------
-    stbi_set_flip_vertically_on_load(true);
+//    stbi_set_flip_vertically_on_load(true);
 //    Model ourModel("resources/objects/backpack/backpack.obj");
     Model ourModel("resources/objects/boat1/Boat.obj");
 //    Model ourModel("resources/objects/boat/source/Boat.obj");
@@ -415,17 +436,23 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 // glfw: whenever the mouse moves, this callback is called
 // -------------------------------------------------------
 void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
+    xpos+=1.744385;
+    ypos+=0.054079;
     if (firstMouse) {
         lastX = xpos;
         lastY = ypos;
         firstMouse = false;
     }
-
+//    0.744385
+//    0.054079
+//    0.665557
     float xoffset = xpos - lastX;
     float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
 
+//    lastX = xpos - 0.744385;
+//    lastY = ypos -0.054079;
     lastX = xpos;
-    lastY = ypos;
+    lastY= ypos;
 
     if (programState->CameraMouseMovementUpdateEnabled)
         programState->camera.ProcessMouseMovement(xoffset, yoffset);
@@ -468,7 +495,6 @@ void DrawImGui(ProgramState *programState) {
         ImGui::Checkbox("Camera mouse update", &programState->CameraMouseMovementUpdateEnabled);
         ImGui::End();
     }
-
     ImGui::Render();
     //INFORMACIJE su sakrivene kada ovo zakomentarisem, prozor za cameraPosition i za boju pozadine
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -516,5 +542,5 @@ unsigned int loadCubemap(vector<std::string> faces)
 
     return textureID;
 }
-//TODO1: kako da mi se lepo vidi model, sa bojama?
+
 //TODO2: da mi pozicija kamere na pocetku bude usmerena ka jezeru a ne suprotno

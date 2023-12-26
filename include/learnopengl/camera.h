@@ -85,10 +85,11 @@ public:
     {
         xoffset *= MouseSensitivity;
         yoffset *= MouseSensitivity;
-
+//        Yaw   += -0.1;
+//        Pitch += -0.1;
         Yaw   += xoffset;
         Pitch += yoffset;
-
+        constrainPitch= false;
         // make sure that when pitch is out of bounds, screen doesn't get flipped
         if (constrainPitch)
         {
@@ -117,6 +118,15 @@ private:
     void updateCameraVectors()
     {
         // calculate the new Front vector
+//        camera front
+//        -0.03, 0.003, -0.999501
+//
+//        camera front mi se menja
+//        treba da bude oko
+//        0.744385
+//        0.054079
+//        0.665557
+//        ovo treba nabosti da bude prikazano jezero
         glm::vec3 front;
         front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
         front.y = sin(glm::radians(Pitch));
