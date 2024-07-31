@@ -34,8 +34,8 @@ bool shadowsKeyPressed = true;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-glm::vec3 backpackPosition = glm::vec3(0.0f,0.0f,0.0f);
-float backpackScale =0.05f;
+glm::vec3 backpackPosition = glm::vec3(-4.0f,0.0f,1.0f);
+float backpackScale =0.35f;
 bool ImGuiEnabled = false;
 bool CameraMouseMovementUpdateEnabled = true;
 
@@ -193,12 +193,12 @@ int main() {
 
     // load models
     // -----------
-//    Model ourModel("resources/objects/backpack/backpack.obj");
+    Model ourModel("resources/objects/backpack/backpack.obj");
 //    Model ourModel("resources/objects/colored-flower/source/Flower Patch.fbx");
 //    Model ourModel("resources/objects/lily-flower/source/LilyFlower.obj");
 //    Model ourModel("resources/objects/tree/scene.gltf");
 //    Model ourModel("resources/objects/tree2/scene.gltf");
-    Model ourModel("resources/objects/lamp/scene.gltf");
+//    Model ourModel("resources/objects/lamp/scene.gltf");
 
     ourModel.SetShaderTextureNamePrefix("material.");
 
@@ -247,7 +247,8 @@ int main() {
 
 
     glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
-    backpackPosition = lightPos;
+//    backpackPosition = glm::vec3(10.0f,0.5f,-1.0f);
+//    backpackPosition = lightPos;
 //    lightPos = camera.Position;
 
     // render loop
@@ -333,6 +334,8 @@ int main() {
 
         //dodato begin
         modelShader.use();
+        modelShader.setInt("shadows", shadows); // enable/disable shadows by pressing 'SPACE'
+        modelShader.setFloat("far_plane", far_plane);
         pointLight.position = lightPos; //glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
         modelShader.setVec3("pointLight.position", pointLight.position);
         modelShader.setVec3("pointLight.ambient", pointLight.ambient);
