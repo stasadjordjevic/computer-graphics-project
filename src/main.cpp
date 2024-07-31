@@ -23,6 +23,7 @@ void processInput(GLFWwindow *window);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 unsigned int loadTexture(const char *path);
 void renderScene(const Shader &shader);
+void renderModel(const Shader &shader,const Model &model);
 void renderCube();
 
 // settings
@@ -34,7 +35,8 @@ bool shadowsKeyPressed = true;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-glm::vec3 backpackPosition = glm::vec3(-4.0f,0.0f,1.0f);
+glm::vec3 backpackPosition = glm::vec3(4.0f,-2.0f,1.0f);
+//4.0f, -3.5f, 0.0
 float backpackScale =0.35f;
 bool ImGuiEnabled = false;
 bool CameraMouseMovementUpdateEnabled = true;
@@ -193,12 +195,12 @@ int main() {
 
     // load models
     // -----------
-    Model ourModel("resources/objects/backpack/backpack.obj");
+//    Model ourModel("resources/objects/backpack/backpack.obj");
 //    Model ourModel("resources/objects/colored-flower/source/Flower Patch.fbx");
 //    Model ourModel("resources/objects/lily-flower/source/LilyFlower.obj");
 //    Model ourModel("resources/objects/tree/scene.gltf");
 //    Model ourModel("resources/objects/tree2/scene.gltf");
-//    Model ourModel("resources/objects/lamp/scene.gltf");
+    Model ourModel("resources/objects/lamp/scene.gltf");
 
     ourModel.SetShaderTextureNamePrefix("material.");
 
@@ -247,8 +249,6 @@ int main() {
 
 
     glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
-//    backpackPosition = glm::vec3(10.0f,0.5f,-1.0f);
-//    backpackPosition = lightPos;
 //    lightPos = camera.Position;
 
     // render loop
@@ -302,6 +302,10 @@ int main() {
         simpleDepthShader.setFloat("far_plane", far_plane);
         simpleDepthShader.setVec3("lightPos", lightPos);
         renderScene(simpleDepthShader);
+        modelShader.use();
+        renderModel(modelShader,ourModel);
+        ourModel.Draw(modelShader);
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // 2. render scene as normal
@@ -325,6 +329,10 @@ int main() {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
         renderScene(shader);
+        modelShader.use();
+        renderModel(modelShader,ourModel);
+        ourModel.Draw(modelShader);
+
 
 //        glBindVertexArray(planeVAO);
 //        glActiveTexture(GL_TEXTURE0);
@@ -333,34 +341,34 @@ int main() {
 
 
         //dodato begin
-        modelShader.use();
-        modelShader.setInt("shadows", shadows); // enable/disable shadows by pressing 'SPACE'
-        modelShader.setFloat("far_plane", far_plane);
-        pointLight.position = lightPos; //glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
-        modelShader.setVec3("pointLight.position", pointLight.position);
-        modelShader.setVec3("pointLight.ambient", pointLight.ambient);
-        modelShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        modelShader.setVec3("pointLight.specular", pointLight.specular);
-        modelShader.setFloat("pointLight.constant", pointLight.constant);
-        modelShader.setFloat("pointLight.linear", pointLight.linear);
-        modelShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        modelShader.setVec3("viewPosition", camera.Position);
-        modelShader.setFloat("material.shininess", 32.0f);
-        // view/projection transformations
-        projection = glm::perspective(glm::radians(camera.Zoom),
-                                                (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
-        view = camera.GetViewMatrix();
-        modelShader.setMat4("projection", projection);
-        modelShader.setMat4("view", view);
-
-        // render the loaded model
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model,
-                               backpackPosition); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(backpackScale));    // it's a bit too big for our scene, so scale it down
-        modelShader.setMat4("model", model);
-        ourModel.Draw(modelShader);
-        renderScene(modelShader);
+//        modelShader.use();
+//        modelShader.setInt("shadows", shadows); // enable/disable shadows by pressing 'SPACE'
+//        modelShader.setFloat("far_plane", far_plane);
+//        pointLight.position = lightPos; //glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
+//        modelShader.setVec3("pointLight.position", pointLight.position);
+//        modelShader.setVec3("pointLight.ambient", pointLight.ambient);
+//        modelShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+//        modelShader.setVec3("pointLight.specular", pointLight.specular);
+//        modelShader.setFloat("pointLight.constant", pointLight.constant);
+//        modelShader.setFloat("pointLight.linear", pointLight.linear);
+//        modelShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+//        modelShader.setVec3("viewPosition", camera.Position);
+//        modelShader.setFloat("material.shininess", 32.0f);
+//        // view/projection transformations
+//        projection = glm::perspective(glm::radians(camera.Zoom),
+//                                                (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+//        view = camera.GetViewMatrix();
+//        modelShader.setMat4("projection", projection);
+//        modelShader.setMat4("view", view);
+//
+//        // render the loaded model
+//        glm::mat4 model = glm::mat4(1.0f);
+//        model = glm::translate(model,
+//                               backpackPosition); // translate it down so it's at the center of the scene
+//        model = glm::scale(model, glm::vec3(backpackScale));    // it's a bit too big for our scene, so scale it down
+//        modelShader.setMat4("model", model);
+//        ourModel.Draw(modelShader);
+//        renderScene(modelShader);
 //        renderScene(shader);
         //dodato end
 
@@ -456,6 +464,54 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 }
 
 
+void renderModel(const Shader &modelShader,const Model &ourModel)
+{
+    float near_plane = 1.0f;
+    float far_plane = 25.0f;
+    glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
+//    Model ourModel("resources/objects/backpack/backpack.obj");
+
+
+    PointLight pointLight;
+    pointLight.position = glm::vec3(0.0f, 1.0, 0.0);
+    pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
+    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
+    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
+
+    pointLight.constant = 1.0f;
+    pointLight.linear = 0.09f;
+    pointLight.quadratic = 0.032f;
+//    modelShader.use();
+    modelShader.setInt("shadows", shadows); // enable/disable shadows by pressing 'SPACE'
+    modelShader.setFloat("far_plane", far_plane);
+    pointLight.position = lightPos; //glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
+    modelShader.setVec3("pointLight.position", pointLight.position);
+    modelShader.setVec3("pointLight.ambient", pointLight.ambient);
+    modelShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+    modelShader.setVec3("pointLight.specular", pointLight.specular);
+    modelShader.setFloat("pointLight.constant", pointLight.constant);
+    modelShader.setFloat("pointLight.linear", pointLight.linear);
+    modelShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+    modelShader.setVec3("viewPosition", camera.Position);
+    modelShader.setFloat("material.shininess", 32.0f);
+    // view/projection transformations
+    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom),
+                                  (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 view = camera.GetViewMatrix();
+    modelShader.setMat4("projection", projection);
+    modelShader.setMat4("view", view);
+
+    // render the loaded model
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model,
+                           backpackPosition); // translate it down so it's at the center of the scene
+    model = glm::scale(model, glm::vec3(backpackScale));    // it's a bit too big for our scene, so scale it down
+    modelShader.setMat4("model", model);
+//    ourModel.Draw(modelShader);
+}
+
+
+
 // renders the 3D scene
 // --------------------
 void renderScene(const Shader &shader)
@@ -473,27 +529,6 @@ void renderScene(const Shader &shader)
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(4.0f, -3.5f, 0.0));
     model = glm::scale(model, glm::vec3(0.5f));
-    shader.setMat4("model", model);
-    renderCube();
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(2.0f, 3.0f, 1.0));
-    model = glm::scale(model, glm::vec3(0.75f));
-    shader.setMat4("model", model);
-    renderCube();
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(-3.0f, -1.0f, 0.0));
-    model = glm::scale(model, glm::vec3(0.5f));
-    shader.setMat4("model", model);
-    renderCube();
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(-1.5f, 1.0f, 1.5));
-    model = glm::scale(model, glm::vec3(0.5f));
-    shader.setMat4("model", model);
-    renderCube();
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(-1.5f, 2.0f, -3.0));
-    model = glm::rotate(model, glm::radians(60.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
-    model = glm::scale(model, glm::vec3(0.75f));
     shader.setMat4("model", model);
     renderCube();
 }
