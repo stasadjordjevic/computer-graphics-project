@@ -23,7 +23,8 @@ void processInput(GLFWwindow *window);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 unsigned int loadTexture(const char *path);
 void renderScene(const Shader &shader);
-void renderModel(const Shader &shader,const Model &model);
+void renderModel(const Shader &modelShader,const Model &ourModel,glm::vec3 modelPosition,float modelScale,bool sc);
+
 void renderCube();
 
 // settings
@@ -35,10 +36,13 @@ bool shadowsKeyPressed = true;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-//glm::vec3 backpackPosition = glm::vec3(4.0f,-2.0f,1.0f);
-glm::vec3 backpackPosition = glm::vec3(1.0f, -3.0f, -3.0f);
+//glm::vec3 bedPosition = glm::vec3(4.0f,-2.0f,1.0f);
+glm::vec3 bedPosition = glm::vec3(1.0f, -3.0f, -3.0f);
 // y je na kojoj je visini, samo obrnuto
-float backpackScale =1.9f;
+float bedScale =1.9f;
+glm::vec3 closetPosition = glm::vec3(3.0f, -5.0f, 4.0f);
+// y je na kojoj je visini, samo obrnuto
+float closetScale =1.9f;
 bool ImGuiEnabled = false;
 bool CameraMouseMovementUpdateEnabled = true;
 
@@ -59,53 +63,6 @@ struct PointLight {
     float quadratic;
 };
 
-struct ProgramState {
-    glm::vec3 clearColor = glm::vec3(0);
-    bool ImGuiEnabled = false;
-    Camera camera;
-    bool CameraMouseMovementUpdateEnabled = true;
-    glm::vec3 backpackPosition = glm::vec3(-8.55,0.33,0.95);
-    float backpackScale =0.05f;
-    PointLight pointLight;
-    ProgramState()
-            : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
-
-    void SaveToFile(std::string filename);
-
-    void LoadFromFile(std::string filename);
-};
-
-void ProgramState::SaveToFile(std::string filename) {
-    std::ofstream out(filename);
-    out << clearColor.r << '\n'
-        << clearColor.g << '\n'
-        << clearColor.b << '\n'
-        << ImGuiEnabled << '\n'
-        << camera.Position.x << '\n'
-        << camera.Position.y << '\n'
-        << camera.Position.z << '\n'
-        << camera.Front.x << '\n'
-        << camera.Front.y << '\n'
-        << camera.Front.z << '\n';
-}
-
-void ProgramState::LoadFromFile(std::string filename) {
-    std::ifstream in(filename);
-    if (in) {
-        in >> clearColor.r
-           >> clearColor.g
-           >> clearColor.b
-           >> ImGuiEnabled
-           >> camera.Position.x
-           >> camera.Position.y
-           >> camera.Position.z
-           >> camera.Front.x
-           >> camera.Front.y
-           >> camera.Front.z;
-    }
-}
-
-ProgramState *programState;
 
 
 int main() {
@@ -212,9 +169,12 @@ int main() {
 //    Model ourModel("resources/objects/tree2/scene.gltf");
 //    Model ourModel("resources/objects/lamp/scene.gltf");
 
-    Model ourModel("resources/objects/children_bed/scene.gltf");
+    Model bedModel("resources/objects/children_bed/scene.gltf");
+    bedModel.SetShaderTextureNamePrefix("material.");
 
-    ourModel.SetShaderTextureNamePrefix("material.");
+    Model closetModel("resources/objects/old_closet/scene.gltf");
+
+    closetModel.SetShaderTextureNamePrefix("material.");
 
     PointLight pointLight;
     pointLight.position = glm::vec3(0.0f, 1.0, 0.0);
@@ -335,8 +295,10 @@ int main() {
         simpleDepthShader.setVec3("lightPos", lightPos);
         renderScene(simpleDepthShader);
         modelShader.use();
-        renderModel(modelShader,ourModel);
-        ourModel.Draw(modelShader);
+        renderModel(modelShader,bedModel,bedPosition,bedScale,false);
+        bedModel.Draw(modelShader);
+        renderModel(modelShader,closetModel,closetPosition,closetScale,true);
+        closetModel.Draw(modelShader);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -368,8 +330,10 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, floorTexture);
         renderScene(shader);
         modelShader.use();
-        renderModel(modelShader,ourModel);
-        ourModel.Draw(modelShader);
+        renderModel(modelShader,bedModel,bedPosition,bedScale,false);
+        bedModel.Draw(modelShader);
+        renderModel(modelShader,closetModel,closetPosition,closetScale,true);
+        closetModel.Draw(modelShader);
 
 
 //        glBindVertexArray(planeVAO);
@@ -402,8 +366,8 @@ int main() {
 //        // render the loaded model
 //        glm::mat4 model = glm::mat4(1.0f);
 //        model = glm::translate(model,
-//                               backpackPosition); // translate it down so it's at the center of the scene
-//        model = glm::scale(model, glm::vec3(backpackScale));    // it's a bit too big for our scene, so scale it down
+//                               bedPosition); // translate it down so it's at the center of the scene
+//        model = glm::scale(model, glm::vec3(bedScale));    // it's a bit too big for our scene, so scale it down
 //        modelShader.setMat4("model", model);
 //        ourModel.Draw(modelShader);
 //        renderScene(modelShader);
@@ -414,12 +378,6 @@ int main() {
 //        renderScene(shader);
 //        renderScene(modelShader);
 //        renderScene(shader);/
-
-        // floor
-//        glBindVertexArray(planeVAO);
-//        glActiveTexture(GL_TEXTURE0);
-//        glBindTexture(GL_TEXTURE_2D, floorTexture);
-//        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -500,15 +458,11 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         }
     }
 }
-
-
-void renderModel(const Shader &modelShader,const Model &ourModel)
+void renderModel(const Shader &modelShader,const Model &ourModel,glm::vec3 modelPosition,float modelScale,bool sc)
 {
     float near_plane = 1.0f;
     float far_plane = 25.0f;
     glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
-//    Model ourModel("resources/objects/backpack/backpack.obj");
-
 
     PointLight pointLight;
     pointLight.position = glm::vec3(0.0f, 1.0, 0.0);
@@ -519,7 +473,6 @@ void renderModel(const Shader &modelShader,const Model &ourModel)
     pointLight.constant = 1.0f;
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.032f;
-//    modelShader.use();
     modelShader.setInt("shadows", shadows); // enable/disable shadows by pressing 'SPACE'
     modelShader.setFloat("far_plane", far_plane);
     pointLight.position = lightPos; //glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
@@ -542,8 +495,11 @@ void renderModel(const Shader &modelShader,const Model &ourModel)
     // render the loaded model
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model,
-                           backpackPosition); // translate it down so it's at the center of the scene
-    model = glm::scale(model, glm::vec3(backpackScale));    // it's a bit too big for our scene, so scale it down
+                           modelPosition); // translate it down so it's at the center of the scene
+    if(sc){
+        model = glm::rotate(model,glm::radians(90.0f),glm::vec3(-1.0f, 0.0f, 0.0f));
+    }
+    model = glm::scale(model, glm::vec3(modelScale));    // it's a bit too big for our scene, so scale it down
     modelShader.setMat4("model", model);
 //    ourModel.Draw(modelShader);
 }
