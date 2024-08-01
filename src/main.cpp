@@ -35,9 +35,10 @@ bool shadowsKeyPressed = true;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-glm::vec3 backpackPosition = glm::vec3(4.0f,-2.0f,1.0f);
-//4.0f, -3.5f, 0.0
-float backpackScale =0.35f;
+//glm::vec3 backpackPosition = glm::vec3(4.0f,-2.0f,1.0f);
+glm::vec3 backpackPosition = glm::vec3(1.0f, -3.0f, -3.0f);
+// y je na kojoj je visini, samo obrnuto
+float backpackScale =1.9f;
 bool ImGuiEnabled = false;
 bool CameraMouseMovementUpdateEnabled = true;
 
@@ -171,6 +172,15 @@ int main() {
 //            -10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,   0.0f, 10.0f,
 //            10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,  10.0f, 10.0f
 //    };
+
+//    float planeVertices[] = {
+//            -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+//            1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
+//            1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+//            1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+//            -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+//            -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f// top-right
+//    };
 //    // plane VAO
 //    unsigned int planeVAO, planeVBO;
 //    glGenVertexArrays(1, &planeVAO);
@@ -191,7 +201,7 @@ int main() {
     // load textures
     unsigned int wallTexture = loadTexture(FileSystem::getPath("resources/textures/wall_white.jpg").c_str());
     unsigned int floorTexture = loadTexture(FileSystem::getPath("resources/textures/floor1.jpg").c_str());
-
+//    wallTexture = floorTexture;
 
     // load models
     // -----------
@@ -200,7 +210,9 @@ int main() {
 //    Model ourModel("resources/objects/lily-flower/source/LilyFlower.obj");
 //    Model ourModel("resources/objects/tree/scene.gltf");
 //    Model ourModel("resources/objects/tree2/scene.gltf");
-    Model ourModel("resources/objects/lamp/scene.gltf");
+//    Model ourModel("resources/objects/lamp/scene.gltf");
+
+    Model ourModel("resources/objects/children_bed/scene.gltf");
 
     ourModel.SetShaderTextureNamePrefix("material.");
 
@@ -223,14 +235,34 @@ int main() {
     unsigned int depthCubemap;
     glGenTextures(1, &depthCubemap);
     glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-    for (unsigned int i = 0; i < 6; ++i)
+//    for (unsigned int i = 0; i < 6; ++i)
+//        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    for (unsigned int i = 0; i < 6; ++i) {
+        // Load the same texture for all faces initially
+        unsigned int textureToLoad = wallTexture;
+        if (i == 4) { // Index 4 is the bottom face of the cubemap
+            textureToLoad = floorTexture;
+        }
+
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        // Copy texture data to each face of the cubemap
+        glBindTexture(GL_TEXTURE_2D, textureToLoad);
+        // Assuming each face is a square, we'll use the entire image
+        glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, 0, 0, SHADOW_WIDTH, SHADOW_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, NULL); // Update the face with the texture
+    }
+
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    // attach depth texture as FBO's depth buffer
+
+// attach depth texture as FBO's depth buffer
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap, 0);
     // nece se koristiti za renderovanje boja nego samo za renderovanje dubina
@@ -264,9 +296,9 @@ int main() {
         // -----
         processInput(window);
 
-        lightPos.z = 3.0f;
+//        lightPos.z = 3.0f;
 
-//        lightPos.z = sin(glfwGetTime()*0.5)*3.0;
+        lightPos.z = sin(glfwGetTime()*0.5)*3.0;
 
         // render scene
         // ------
@@ -326,8 +358,14 @@ int main() {
 //        shader.setFloat("material.shininess", 32.0f);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, wallTexture);
+        //ovde gore kad stavim floorTexture onda mi je sve u podu
+//        glActiveTexture(GL_TEXTURE1);
+//        glBindTexture(GL_TEXTURE_2D, floorTexture);
+
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, floorTexture);
         renderScene(shader);
         modelShader.use();
         renderModel(modelShader,ourModel);
