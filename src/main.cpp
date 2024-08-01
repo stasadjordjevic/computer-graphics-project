@@ -41,8 +41,13 @@ glm::vec3 bedPosition = glm::vec3(1.0f, -3.0f, -3.0f);
 // y je na kojoj je visini, samo obrnuto
 float bedScale =1.9f;
 glm::vec3 closetPosition = glm::vec3(3.0f, -5.0f, 4.0f);
-// y je na kojoj je visini, samo obrnuto
 float closetScale =1.9f;
+//glm::vec3 lampPosition = glm::vec3(1.0f, 2.0f, 1.0f);
+glm::vec3 lampPosition = glm::vec3(0.0f, 2.0f, 0.0f);
+float lampScale =1.0f;
+//TODO podesiti da je lightPost i lampPos kompatibilno (sijalica izvor svetla)
+
+
 bool ImGuiEnabled = false;
 bool CameraMouseMovementUpdateEnabled = true;
 
@@ -171,15 +176,16 @@ int main() {
 
     Model bedModel("resources/objects/children_bed/scene.gltf");
     bedModel.SetShaderTextureNamePrefix("material.");
-
     Model closetModel("resources/objects/old_closet/scene.gltf");
-
     closetModel.SetShaderTextureNamePrefix("material.");
+    Model lampModel("resources/objects/ceiling_lamp/scene.gltf");
+    lampModel.SetShaderTextureNamePrefix("material.");
 
     PointLight pointLight;
     pointLight.position = glm::vec3(0.0f, 1.0, 0.0);
     pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
+//    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
+    pointLight.diffuse = glm::vec3(1.0, 1.0, 1.0);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
     pointLight.constant = 1.0f;
@@ -299,6 +305,8 @@ int main() {
         bedModel.Draw(modelShader);
         renderModel(modelShader,closetModel,closetPosition,closetScale,true);
         closetModel.Draw(modelShader);
+        renderModel(modelShader,lampModel,lampPosition,lampScale,false);
+        lampModel.Draw(modelShader);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -334,6 +342,8 @@ int main() {
         bedModel.Draw(modelShader);
         renderModel(modelShader,closetModel,closetPosition,closetScale,true);
         closetModel.Draw(modelShader);
+        renderModel(modelShader,lampModel,lampPosition,lampScale,false);
+        lampModel.Draw(modelShader);
 
 
 //        glBindVertexArray(planeVAO);
@@ -467,8 +477,11 @@ void renderModel(const Shader &modelShader,const Model &ourModel,glm::vec3 model
     PointLight pointLight;
     pointLight.position = glm::vec3(0.0f, 1.0, 0.0);
     pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
-    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
+//    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
+    pointLight.diffuse = glm::vec3(1.0, 1.0, 1.0);
+//    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
+    pointLight.specular = glm::vec3(0.0, 0.0, 0.0);
+
 
     pointLight.constant = 1.0f;
     pointLight.linear = 0.09f;
