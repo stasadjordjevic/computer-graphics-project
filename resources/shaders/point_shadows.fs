@@ -6,6 +6,8 @@ in vec3 Normal;
 in vec3 FragPos;
 
 uniform sampler2D diffuseTexture;
+// uniform sampler2D diffuseTexture1;
+
 uniform samplerCube depthMap;
 
 uniform vec3 lightPos;

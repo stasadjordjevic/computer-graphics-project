@@ -68,7 +68,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 //     vec3 specular = light.specular * spec * vec3(texture(material.texture_specular1, TexCoords).xxx);
     vec3 specular = light.specular * spec * texture(material.texture_specular1, TexCoords).xxx;
 
-    attenuation=1.0; //nemam slabljenje da mi ne bi bio crn ranac
+    attenuation=1.0; //nemam slabljenje da mi ne bi bili pretamni modeli
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
