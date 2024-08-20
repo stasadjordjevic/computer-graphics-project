@@ -22,10 +22,11 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 unsigned int loadTexture(const char *path);
-void renderScene(const Shader &shader);
-void renderModel(const Shader &modelShader,const Model &ourModel,glm::vec3 modelPosition,float modelScale,bool sc);
-void renderFloor();
+void renderScene(const Shader &shader,const glm::vec3& lightPos);
+void renderModel(const Shader &modelShader,glm::vec3 modelPosition,float modelScale,bool sc);
+void renderFloor(const Shader &shader);
 void renderCube();
+void renderPlane();
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -36,16 +37,19 @@ bool shadowsKeyPressed = true;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-//glm::vec3 bedPosition = glm::vec3(4.0f,-2.0f,1.0f);
+//TODO pozicija kamere da se nasteluje
+//Camera camera(glm::vec3(4.0f, 0.0f, 0.0f));
+glm::vec3 carpetPosition = glm::vec3(1.0f, -3.52f, 0.0f);
+float carpetScale =15.0f;
 glm::vec3 bedPosition = glm::vec3(1.0f, -1.5f, -3.0f);
-// y je na kojoj je visini, samo obrnuto
 float bedScale =1.9f;
-glm::vec3 closetPosition = glm::vec3(3.0f, -3.5f, 4.0f);
+glm::vec3 closetPosition = glm::vec3(3.0f, -3.55f, 4.4f);
 float closetScale =1.9f;
-//glm::vec3 lampPosition = glm::vec3(1.0f, 2.0f, 1.0f);
 glm::vec3 lampPosition = glm::vec3(0.0f, 2.5f, 0.0f);
 float lampScale =1.0f;
-//TODO podesiti da je lightPost i lampPos kompatibilno (sijalica izvor svetla)
+glm::vec3 doorPosition = glm::vec3(-3.0f, -3.6f, 4.65f);
+float doorScale =0.15f;
+//TODO podesiti da je lightPos i lampPos kompatibilno (sijalica izvor svetla)
 
 
 bool ImGuiEnabled = false;
@@ -123,60 +127,26 @@ int main() {
     Shader shader("resources/shaders/point_shadows.vs", "resources/shaders/point_shadows.fs");
     Shader simpleDepthShader("resources/shaders/point_shadows_depth.vs", "resources/shaders/point_shadows_depth.fs", "resources/shaders/point_shadows_depth.gs");
     Shader modelShader("resources/shaders/model_lighting.vs", "resources/shaders/model_lighting.fs");
-//    Shader floorShader("resources/shaders/floor.vs", "resources/shaders/floor.fs");
-// ovo je za pod, podesiti koordinate
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
-//    float planeVertices[] = {
-//            // positions            // normals         // texcoords
-//            10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,  10.0f,  0.0f,
-//            -10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,   0.0f,  0.0f,
-//            -10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,   0.0f, 10.0f,
-//
-//            10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,  10.0f,  0.0f,
-//            -10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,   0.0f, 10.0f,
-//            10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,  10.0f, 10.0f
-//    };
-
-//    float planeVertices[] = {
-//            -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
-//            1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
-//            1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
-//            1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
-//            -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
-//            -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f// top-right
-//    };
-//    // plane VAO
-//    unsigned int planeVAO, planeVBO;
-//    glGenVertexArrays(1, &planeVAO);
-//    glGenBuffers(1, &planeVBO);
-//    glBindVertexArray(planeVAO);
-//    glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
-//    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
-//    glEnableVertexAttribArray(0);
-//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-//    glEnableVertexAttribArray(1);
-//    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-//    glEnableVertexAttribArray(2);
-//    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-//    glBindVertexArray(0);
-
-
+    Shader floorShader("resources/shaders/floor.vs", "resources/shaders/floor.fs");
 
     // load textures
     unsigned int wallTexture = loadTexture(FileSystem::getPath("resources/textures/wall_white.jpg").c_str());
-    unsigned int floorTexture = loadTexture(FileSystem::getPath("resources/textures/floor1.jpg").c_str());
-//    wallTexture = floorTexture;
+//    unsigned int floorTexture = loadTexture(FileSystem::getPath("resources/textures/floor1.jpg").c_str());
 
+    unsigned int floorTexture = loadTexture(FileSystem::getPath("resources/textures/wall1.jpg").c_str());
     // load models
     // -----------
-//    Model ourModel("resources/objects/backpack/backpack.obj");
     Model bedModel("resources/objects/children_bed/scene.gltf");
     bedModel.SetShaderTextureNamePrefix("material.");
     Model closetModel("resources/objects/old_closet/scene.gltf");
     closetModel.SetShaderTextureNamePrefix("material.");
     Model lampModel("resources/objects/ceiling_lamp/scene.gltf");
     lampModel.SetShaderTextureNamePrefix("material.");
+    Model carpetModel("resources/objects/kilim/scene.gltf"); //TODO probati sa rug, mora se promeniti pozicija i scale
+    carpetModel.SetShaderTextureNamePrefix("material.");
+    Model doorModel("resources/objects/stuff_in_my_room_door/scene.gltf");
+    doorModel.SetShaderTextureNamePrefix("material.");
+
 
     PointLight pointLight;
     pointLight.position = glm::vec3(0.0f, 1.0, 0.0);
@@ -188,32 +158,17 @@ int main() {
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.032f;
 
-    // configure depth map FBO ->ovo je sve okej
+    // configure depth map FBO
     // -----------------------
     const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
     unsigned int depthMapFBO;
     glGenFramebuffers(1, &depthMapFBO);
     // create depth cubemap texture
     unsigned int depthCubemap;
-    glGenTextures(1, &depthCubemap);
+    glGenTextures(2, &depthCubemap);
     glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-//    for (unsigned int i = 0; i < 6; ++i) {
-//        // Load the same texture for all faces initially
-//        unsigned int textureToLoad = wallTexture;
-//        if (i == 4) { // Index 4 is the bottom face of the cubemap
-//            textureToLoad = floorTexture;
-//        }
-//
-//        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-//        // Copy texture data to each face of the cubemap
-//        glBindTexture(GL_TEXTURE_2D, textureToLoad);
-//        // Assuming each face is a square, we'll use the entire image
-//        glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, 0, 0, SHADOW_WIDTH, SHADOW_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, NULL); // Update the face with the texture
-//    }
     for (unsigned int i = 0; i < 6; ++i)
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-
-
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -235,13 +190,13 @@ int main() {
     // --------------------
     shader.use();
     shader.setInt("diffuseTexture", 0);
-//    shader.setInt("diffuseTexture1", 0);
-
+    shader.setInt("diffuseTexture1", 2);
     shader.setInt("depthMap", 1);
 
 
     glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
 //    lightPos = camera.Position;
+    lightPos = lampPosition;
 
     // render loop
     // -----------
@@ -257,8 +212,7 @@ int main() {
         processInput(window);
 
 //        lightPos.z = 3.0f;
-
-        lightPos.z = sin(glfwGetTime()*0.5)*3.0;
+//        lightPos.z = sin(glfwGetTime()*0.5)*3.0;
 
         // render scene
         // ------
@@ -283,7 +237,7 @@ int main() {
         shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
         shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
 
-        // 1. render scene to depth cubemap ->ok
+        // 1. render scene to depth cubemap
         // --------------------------------
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -293,20 +247,23 @@ int main() {
             simpleDepthShader.setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
         simpleDepthShader.setFloat("far_plane", far_plane);
         simpleDepthShader.setVec3("lightPos", lightPos);
-        renderScene(simpleDepthShader);
-        modelShader.use();
-        renderModel(modelShader,bedModel,bedPosition,bedScale,false);
-        bedModel.Draw(modelShader);
-        renderModel(modelShader,closetModel,closetPosition,closetScale,true);
-        closetModel.Draw(modelShader);
-        renderModel(modelShader,lampModel,lampPosition,lampScale,false);
-        lampModel.Draw(modelShader);
+        renderScene(simpleDepthShader,lightPos);
+//        renderFloor(simpleDepthShader);
+        renderModel(simpleDepthShader,carpetPosition,carpetScale, false);
+        carpetModel.Draw(simpleDepthShader);
+        renderModel(simpleDepthShader,bedPosition,bedScale, false);
+        bedModel.Draw(simpleDepthShader);
+        renderModel(simpleDepthShader,closetPosition,closetScale,true);
+        closetModel.Draw(simpleDepthShader);
+        renderModel(simpleDepthShader,lampPosition,lampScale,false);
+        lampModel.Draw(simpleDepthShader);
+        renderModel(simpleDepthShader,doorPosition,doorScale,false);
+        doorModel.Draw(simpleDepthShader);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // 2. render scene as normal
         // -------------------------
-        // ovde glavni deo -> isto kao i uvek, nezavisno od senki, sve crtamo kao sto smo navikli
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shader.use();
@@ -320,28 +277,82 @@ int main() {
         shader.setInt("shadows", shadows); // enable/disable shadows by pressing 'SPACE'
         shader.setFloat("far_plane", far_plane);
 
-        //ovo je deo gde se postavlja tekstura za cubemap
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, wallTexture);
-        //ovde gore kad stavim floorTexture onda mi je sve u teksturi poda
-//        glActiveTexture(GL_TEXTURE1);
-//        glBindTexture(GL_TEXTURE_2D, floorTexture);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-        renderScene(shader);
+
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, floorTexture);
+        renderScene(shader,lightPos);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, floorTexture);
+// render floor
+        floorShader.use();
+        floorShader.setInt("diffuseTexture", 2);
+        floorShader.setInt("depthMap", 1);
+        floorShader.setMat4("projection", projection);
+        floorShader.setMat4("view", view);
+        // set lighting uniforms
+        floorShader.setVec3("lightPos",lightPos);
+        floorShader.setVec3("viewPos",camera.Position);
+        floorShader.setInt("shadows", shadows); // enable/disable shadows by pressing 'SPACE'
+        floorShader.setFloat("far_plane", far_plane);
+//        renderFloor(floorShader);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
         modelShader.use();
-        renderModel(modelShader,bedModel,bedPosition,bedScale,false);
+        // render bed model
+        glDisable(GL_CULL_FACE);
+        renderModel(modelShader,bedPosition,bedScale,false);
+        modelShader.setInt("reverse_normals", 1);
         bedModel.Draw(modelShader);
-        renderModel(modelShader,closetModel,closetPosition,closetScale,true);
+        glEnable(GL_CULL_FACE);
+        modelShader.setInt("reverse_normals", 0);
+
+        // render carpet model
+        glDisable(GL_CULL_FACE);
+        renderModel(modelShader,carpetPosition,carpetScale,false);
+        modelShader.setInt("reverse_normals", 1);
+        carpetModel.Draw(modelShader);
+        glEnable(GL_CULL_FACE);
+        modelShader.setInt("reverse_normals", 0);
+
+        // render door model
+        glDisable(GL_CULL_FACE);
+        renderModel(modelShader,doorPosition,doorScale,false);
+        modelShader.setInt("reverse_normals", 1);
+        doorModel.Draw(modelShader);
+        glEnable(GL_CULL_FACE);
+        modelShader.setInt("reverse_normals", 0);
+
+
+        //render closet model
+        glDisable(GL_CULL_FACE);
+        modelShader.setInt("reverse_normals", 1);
+        renderModel(modelShader,closetPosition,closetScale,true);
         closetModel.Draw(modelShader);
-        renderModel(modelShader,lampModel,lampPosition,lampScale,false);
+        glEnable(GL_CULL_FACE);
+        modelShader.setInt("reverse_normals", 0);
+
+        //render lamp model
+        renderModel(modelShader,lampPosition,lampScale,false);
+        glDisable(GL_CULL_FACE);
+        modelShader.setInt("reverse_normals", 1);
         lampModel.Draw(modelShader);
+        glEnable(GL_CULL_FACE);
+        modelShader.setInt("reverse_normals", 0);
+        //dodate naredne dve linije
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, floorTexture);
 
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap); //KOMENTAR 4. isto je i bez ove dve linije
 
-//        glBindVertexArray(planeVAO);
-//        glActiveTexture(GL_TEXTURE0);
-//        glBindTexture(GL_TEXTURE_2D, floorTexture);
-//        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -421,76 +432,17 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     }
 }
 
-void renderFloor(){
-    Shader floorShader("resources/shaders/floor.vs", "resources/shaders/floor.fs");
-    float vertices[] = {
-            // positions          // colors           // texture coords
-            0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
-            0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
-            -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
-            -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left
-    };
-    unsigned int indices[] = {
-            0, 1, 3, // first triangle
-            1, 2, 3  // second triangle
-    };
-    unsigned int VBO, VAO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-//    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    // texture coord attribute
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-
-    // load and create a texture
-    // -------------------------
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
-    // set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // load image, create texture and generate mipmaps
-    int width, height, nrChannels;
-    // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    unsigned char *data = stbi_load(FileSystem::getPath("resources/textures/container.jpg").c_str(), &width, &height, &nrChannels, 0);
-    if (data)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-
-    glBindTexture(GL_TEXTURE_2D, texture);
-    floorShader.use();
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
+void renderFloor(const Shader &shader) {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model,glm::radians(90.0f),glm::vec3(-1.0f, 0.0f, 0.0f));
+    model = glm::translate(model, glm::vec3(5.0f, 0.0f, -3.4));
+//    model = glm::scale(model, glm::vec3(10.5f));
+    shader.setMat4("model", model);
+    renderPlane();
 }
 
-void renderModel(const Shader &modelShader,const Model &ourModel,glm::vec3 modelPosition,float modelScale,bool sc)
+
+void renderModel(const Shader &modelShader,glm::vec3 modelPosition,float modelScale,bool sc)
 {
     float near_plane = 1.0f;
     float far_plane = 25.0f;
@@ -526,6 +478,7 @@ void renderModel(const Shader &modelShader,const Model &ourModel,glm::vec3 model
     glm::mat4 view = camera.GetViewMatrix();
     modelShader.setMat4("projection", projection);
     modelShader.setMat4("view", view);
+    modelShader.setInt("depthMap", 1);
 
     // render the loaded model
     glm::mat4 model = glm::mat4(1.0f);
@@ -536,14 +489,13 @@ void renderModel(const Shader &modelShader,const Model &ourModel,glm::vec3 model
     }
     model = glm::scale(model, glm::vec3(modelScale));    // it's a bit too big for our scene, so scale it down
     modelShader.setMat4("model", model);
-//    ourModel.Draw(modelShader);
 }
 
 
 
 // renders the 3D scene
 // --------------------
-void renderScene(const Shader &shader)
+void renderScene(const Shader &shader, const glm::vec3& lightPos)
 {
     // room cube
     glm::mat4 model = glm::mat4(1.0f);
@@ -554,15 +506,18 @@ void renderScene(const Shader &shader)
     shader.setMat4("model", model);
     glDisable(GL_CULL_FACE); // note that we disable culling here since we render 'inside' the cube instead of the usual 'outside' which throws off the normal culling methods.
     shader.setInt("reverse_normals", 1); // A small little hack to invert normals when drawing cube from the inside so lighting still works.
-    renderCube();
-//    Shader floorShader("resources/shaders/floor.vs", "resources/shaders/floor.fs");
-//    renderFloor();
-//    floorShader.use();
+    renderCube(); // room
     shader.setInt("reverse_normals", 0); // and of course disable it
     glEnable(GL_CULL_FACE);
     // cubes
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(4.0f, -3.5f, 0.0));
+    model = glm::scale(model, glm::vec3(0.5f));
+    shader.setMat4("model", model);
+    renderCube();
+    // light cube
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, lightPos);
     model = glm::scale(model, glm::vec3(0.5f));
     shader.setMat4("model", model);
     renderCube();
@@ -644,6 +599,52 @@ void renderCube()
 }
 
 
+void renderPlane()
+{
+    float planeVertices[] = {
+            // positions         // texture coords
+            -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,  // bottom-left
+            1.0f, -1.0f, 0.0f,  1.0f, 0.0f,  // bottom-right
+            1.0f,  1.0f, 0.0f,  1.0f, 1.0f,  // top-right
+            -1.0f,  1.0f, 0.0f,  0.0f, 1.0f   // top-left
+    };
+    unsigned int planeIndices[] = {
+            0, 1, 2, // first triangle
+            2, 3, 0  // second triangle
+    };
+    unsigned int VAO, VBO, EBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(planeIndices), planeIndices, GL_STATIC_DRAW);
+
+    // Position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // Texture coordinate attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    // Clean up
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+}
+
 // utility function for loading a 2D texture from file
 // ---------------------------------------------------
 unsigned int loadTexture(char const * path)
@@ -669,6 +670,8 @@ unsigned int loadTexture(char const * path)
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT); // for this tutorial: use GL_CLAMP_TO_EDGE to prevent semi-transparent borders. Due to interpolation it takes texels from next repeat
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // for this tutorial: use GL_CLAMP_TO_EDGE to prevent semi-transparent borders. Due to interpolation it takes texels from next repeat
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 

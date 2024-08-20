@@ -1,0 +1,11 @@
+Model Information:
+* title:	rug
+* source:	https://sketchfab.com/3d-models/rug-f4a9c92c9e194abca7f84b8f1e4f8d2e
+* author:	set_5001 (https://sketchfab.com/set_5001)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "rug" (https://sketchfab.com/3d-models/rug-f4a9c92c9e194abca7f84b8f1e4f8d2e) by set_5001 (https://sketchfab.com/set_5001) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

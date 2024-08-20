@@ -73,7 +73,6 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     diffuse *= attenuation;
     specular *= attenuation;
     float shadow = shadows ? ShadowCalculation(FragPos) : 0.0;
-    shadow = 0.0;
     return (ambient + (1.0-shadow)* (diffuse + specular));
 }
 
