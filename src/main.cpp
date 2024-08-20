@@ -23,8 +23,9 @@ void processInput(GLFWwindow *window);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 unsigned int loadTexture(const char *path);
 void renderScene(const Shader &shader,const glm::vec3& lightPos);
-void renderModel(const Shader &modelShader,glm::vec3 modelPosition,float modelScale,bool sc);
+void renderModel(const Shader &modelShader,glm::vec3 modelPosition,float modelScale,int sc);
 void renderFloor(const Shader &shader);
+void drawInstanced(const Shader &shader);
 void renderCube();
 void renderPlane();
 
@@ -38,19 +39,21 @@ bool shadowsKeyPressed = true;
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 //TODO pozicija kamere da se nasteluje
-//Camera camera(glm::vec3(4.0f, 0.0f, 0.0f));
-glm::vec3 carpetPosition = glm::vec3(1.0f, -3.52f, 0.0f);
+glm::vec3 carpetPosition = glm::vec3(1.0f, -2.52f, 0.0f);
 float carpetScale =15.0f;
-glm::vec3 bedPosition = glm::vec3(1.0f, -1.5f, -3.0f);
+glm::vec3 bedPosition = glm::vec3(1.0f, -0.5f, -3.0f);
 float bedScale =1.9f;
-glm::vec3 closetPosition = glm::vec3(3.0f, -3.55f, 4.4f);
+glm::vec3 closetPosition = glm::vec3(3.0f, -2.55f, 4.4f);
 float closetScale =1.9f;
-glm::vec3 lampPosition = glm::vec3(0.0f, 2.5f, 0.0f);
+glm::vec3 lampPosition = glm::vec3(1.0f, 2.5f, 0.0f);
 float lampScale =1.0f;
-glm::vec3 doorPosition = glm::vec3(-3.0f, -3.6f, 4.65f);
+glm::vec3 doorPosition = glm::vec3(-3.0f, -2.6f, 4.65f);
 float doorScale =0.15f;
-//TODO podesiti da je lightPos i lampPos kompatibilno (sijalica izvor svetla)
+glm::vec3 boxPosition = glm::vec3(-6.0f, -2.6f, -3.0f);
+float boxScale =0.5f;
 
+glm::vec3 legoPosition = glm::vec3(3.0f, -1.6f, 3.0f);
+float legoScale =0.015f;
 
 bool ImGuiEnabled = false;
 bool CameraMouseMovementUpdateEnabled = true;
@@ -71,8 +74,6 @@ struct PointLight {
     float linear;
     float quadratic;
 };
-
-
 
 int main() {
     // glfw: initialize and configure
@@ -128,6 +129,7 @@ int main() {
     Shader simpleDepthShader("resources/shaders/point_shadows_depth.vs", "resources/shaders/point_shadows_depth.fs", "resources/shaders/point_shadows_depth.gs");
     Shader modelShader("resources/shaders/model_lighting.vs", "resources/shaders/model_lighting.fs");
     Shader floorShader("resources/shaders/floor.vs", "resources/shaders/floor.fs");
+    Shader instancingShader("resources/shaders/instancing.vs", "resources/shaders/instancing.fs");
 
     // load textures
     unsigned int wallTexture = loadTexture(FileSystem::getPath("resources/textures/wall_white.jpg").c_str());
@@ -146,7 +148,81 @@ int main() {
     carpetModel.SetShaderTextureNamePrefix("material.");
     Model doorModel("resources/objects/stuff_in_my_room_door/scene.gltf");
     doorModel.SetShaderTextureNamePrefix("material.");
+    Model boxModel("resources/objects/toy_box/scene.gltf");
+    boxModel.SetShaderTextureNamePrefix("material.");
+    Model legoModel("resources/objects/lego_block/scene.gltf");
+//    Model legoModel("resources/objects/toy_box/scene.gltf");
+    legoModel.SetShaderTextureNamePrefix("material.");
 
+
+    //---
+
+    // generate a large list of semi-random model transformation matrices
+    // ------------------------------------------------------------------
+    //TODO generisati drugacije pozicije
+    unsigned int amount = 1000;
+    glm::mat4* modelMatrices;
+    modelMatrices = new glm::mat4[amount];
+    srand(glfwGetTime()); // initialize random seed
+    float radius = 150.0;
+    float offset = 25.0f;
+    for (unsigned int i = 0; i < amount; i++)
+    {
+        glm::mat4 model = glm::mat4(1.0f);
+        // 1. translation: displace along circle with 'radius' in range [-offset, offset]
+        float angle = (float)i / (float)amount * 360.0f;
+        float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+        float x = sin(angle) * radius + displacement;
+        displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+        float y = displacement * 0.4f; // keep height of asteroid field smaller compared to width of x and z
+        displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+        float z = cos(angle) * radius + displacement;
+        model = glm::translate(model, glm::vec3(x, y, z));
+
+        // 2. scale: Scale between 0.05 and 0.25f
+        float scale = (rand() % 20) / 100.0f + 0.05;
+        model = glm::scale(model, glm::vec3(scale));
+
+        // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
+        float rotAngle = (rand() % 360);
+        model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
+
+        // 4. now add to list of matrices
+        modelMatrices[i] = model;
+    }
+    // configure instanced array
+    // -------------------------
+    unsigned int buffer;
+    glGenBuffers(1, &buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+
+    // set transformation matrices as an instance vertex attribute (with divisor 1)
+    // note: we're cheating a little by taking the, now publicly declared, VAO of the model's mesh(es) and adding new vertexAttribPointers
+    // normally you'd want to do this in a more organized fashion, but for learning purposes this will do.
+    // -----------------------------------------------------------------------------------------------------------------------------------
+    for (unsigned int i = 0; i < legoModel.meshes.size(); i++)
+    {
+        unsigned int VAO = legoModel.meshes[i].VAO;
+        glBindVertexArray(VAO);
+        // set attribute pointers for matrix (4 times vec4)
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+        glEnableVertexAttribArray(5);
+        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+        glEnableVertexAttribArray(6);
+        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+
+        glVertexAttribDivisor(3, 1);
+        glVertexAttribDivisor(4, 1);
+        glVertexAttribDivisor(5, 1);
+        glVertexAttribDivisor(6, 1);
+
+        glBindVertexArray(0);
+    }
+//----
 
     PointLight pointLight;
     pointLight.position = glm::vec3(0.0f, 1.0, 0.0);
@@ -216,7 +292,6 @@ int main() {
 
         // render scene
         // ------
-        //todo nzm da li mi je dobar clear color
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -249,16 +324,22 @@ int main() {
         simpleDepthShader.setVec3("lightPos", lightPos);
         renderScene(simpleDepthShader,lightPos);
 //        renderFloor(simpleDepthShader);
-        renderModel(simpleDepthShader,carpetPosition,carpetScale, false);
+        renderModel(simpleDepthShader,carpetPosition,carpetScale, 0);
         carpetModel.Draw(simpleDepthShader);
-        renderModel(simpleDepthShader,bedPosition,bedScale, false);
+        renderModel(simpleDepthShader,bedPosition,bedScale, 0);
         bedModel.Draw(simpleDepthShader);
-        renderModel(simpleDepthShader,closetPosition,closetScale,true);
+        renderModel(simpleDepthShader,closetPosition,closetScale,1);
         closetModel.Draw(simpleDepthShader);
-        renderModel(simpleDepthShader,lampPosition,lampScale,false);
+        renderModel(simpleDepthShader,lampPosition,lampScale,0);
         lampModel.Draw(simpleDepthShader);
-        renderModel(simpleDepthShader,doorPosition,doorScale,false);
+        renderModel(simpleDepthShader,doorPosition,doorScale,0);
         doorModel.Draw(simpleDepthShader);
+        renderModel(simpleDepthShader,boxPosition,boxScale,2);
+        boxModel.Draw(simpleDepthShader);
+
+        //proba lego
+        renderModel(simpleDepthShader,legoPosition,legoScale,0);
+        legoModel.Draw(simpleDepthShader);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -308,7 +389,7 @@ int main() {
         modelShader.use();
         // render bed model
         glDisable(GL_CULL_FACE);
-        renderModel(modelShader,bedPosition,bedScale,false);
+        renderModel(modelShader,bedPosition,bedScale,0);
         modelShader.setInt("reverse_normals", 1);
         bedModel.Draw(modelShader);
         glEnable(GL_CULL_FACE);
@@ -316,7 +397,7 @@ int main() {
 
         // render carpet model
         glDisable(GL_CULL_FACE);
-        renderModel(modelShader,carpetPosition,carpetScale,false);
+        renderModel(modelShader,carpetPosition,carpetScale,0);
         modelShader.setInt("reverse_normals", 1);
         carpetModel.Draw(modelShader);
         glEnable(GL_CULL_FACE);
@@ -324,34 +405,71 @@ int main() {
 
         // render door model
         glDisable(GL_CULL_FACE);
-        renderModel(modelShader,doorPosition,doorScale,false);
+        renderModel(modelShader,doorPosition,doorScale,0);
         modelShader.setInt("reverse_normals", 1);
         doorModel.Draw(modelShader);
         glEnable(GL_CULL_FACE);
         modelShader.setInt("reverse_normals", 0);
 
+        // render box model
+        glDisable(GL_CULL_FACE);
+        renderModel(modelShader,boxPosition,boxScale,2);
+        modelShader.setInt("reverse_normals", 1);
+        boxModel.Draw(modelShader);
+        glEnable(GL_CULL_FACE);
+        modelShader.setInt("reverse_normals", 0);
 
         //render closet model
         glDisable(GL_CULL_FACE);
         modelShader.setInt("reverse_normals", 1);
-        renderModel(modelShader,closetPosition,closetScale,true);
+        renderModel(modelShader,closetPosition,closetScale,1);
         closetModel.Draw(modelShader);
         glEnable(GL_CULL_FACE);
         modelShader.setInt("reverse_normals", 0);
 
         //render lamp model
-        renderModel(modelShader,lampPosition,lampScale,false);
+        renderModel(modelShader,lampPosition,lampScale,0);
         glDisable(GL_CULL_FACE);
         modelShader.setInt("reverse_normals", 1);
         lampModel.Draw(modelShader);
         glEnable(GL_CULL_FACE);
         modelShader.setInt("reverse_normals", 0);
-        //dodate naredne dve linije
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, floorTexture);
+
+
+        //render lego model
+        renderModel(modelShader,legoPosition,legoScale,0);
+        glDisable(GL_CULL_FACE);
+        modelShader.setInt("reverse_normals", 1);
+        legoModel.Draw(modelShader);
+        glEnable(GL_CULL_FACE);
+        modelShader.setInt("reverse_normals", 0);
+
 
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap); //KOMENTAR 4. isto je i bez ove dve linije
+
+        //----
+        //TODO videti sa projection i view matricu kod instancinga
+//        projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
+//        view = camera.GetViewMatrix();
+        instancingShader.use();
+        instancingShader.setMat4("projection", projection);
+        instancingShader.setMat4("view", view);
+
+        // draw lego bricks
+        instancingShader.use();
+        //moj model nema teksture, jednobojan je pa zato su zakomentarisane naredne tri linije, ako promenim model otkomentarisati ih
+//        instancingShader.setInt("texture_diffuse1", 0);
+//        glActiveTexture(GL_TEXTURE0);
+//        glBindTexture(GL_TEXTURE_2D, legoModel.textures_loaded[0].id); // note: we also made the textures_loaded vector public (instead of private) from the model class.
+        for (unsigned int i = 0; i < legoModel.meshes.size(); i++)
+        {
+            glBindVertexArray(legoModel.meshes[i].VAO);
+            glDrawElementsInstanced(GL_TRIANGLES, legoModel.meshes[i].indices.size(), GL_UNSIGNED_INT, 0, amount);
+            glBindVertexArray(0);
+        }
+
+        //---
 
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -442,7 +560,7 @@ void renderFloor(const Shader &shader) {
 }
 
 
-void renderModel(const Shader &modelShader,glm::vec3 modelPosition,float modelScale,bool sc)
+void renderModel(const Shader &modelShader,glm::vec3 modelPosition,float modelScale,int sc)
 {
     float near_plane = 1.0f;
     float far_plane = 25.0f;
@@ -484,8 +602,15 @@ void renderModel(const Shader &modelShader,glm::vec3 modelPosition,float modelSc
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model,
                            modelPosition); // translate it down so it's at the center of the scene
-    if(sc){
+    if(sc==1){
+        //closet
         model = glm::rotate(model,glm::radians(90.0f),glm::vec3(-1.0f, 0.0f, 0.0f));
+    }
+    if(sc==2){
+        //box
+        model = glm::rotate(model,glm::radians(90.0f),glm::vec3(-1.0f, 0.0f, 0.0f));
+        model = glm::rotate(model,glm::radians(90.0f),glm::vec3(0.0f, 0.0f, 1.0f));
+
     }
     model = glm::scale(model, glm::vec3(modelScale));    // it's a bit too big for our scene, so scale it down
     modelShader.setMat4("model", model);
@@ -500,27 +625,26 @@ void renderScene(const Shader &shader, const glm::vec3& lightPos)
     // room cube
     glm::mat4 model = glm::mat4(1.0f);
 // scale to have lower height of the room
-    glm::vec3 scaleFactors = glm::vec3(7.0f, 3.5f, 5.0f);
+    glm::vec3 scaleFactors = glm::vec3(7.0f, 2.5f, 5.0f);
     model = glm::scale(model, scaleFactors);
-//    model = glm::scale(model, glm::vec3(5.0f));
     shader.setMat4("model", model);
     glDisable(GL_CULL_FACE); // note that we disable culling here since we render 'inside' the cube instead of the usual 'outside' which throws off the normal culling methods.
     shader.setInt("reverse_normals", 1); // A small little hack to invert normals when drawing cube from the inside so lighting still works.
     renderCube(); // room
     shader.setInt("reverse_normals", 0); // and of course disable it
     glEnable(GL_CULL_FACE);
-    // cubes
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(4.0f, -3.5f, 0.0));
-    model = glm::scale(model, glm::vec3(0.5f));
-    shader.setMat4("model", model);
-    renderCube();
-    // light cube
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, lightPos);
-    model = glm::scale(model, glm::vec3(0.5f));
-    shader.setMat4("model", model);
-    renderCube();
+    // test cube
+//    model = glm::mat4(1.0f);
+//    model = glm::translate(model, glm::vec3(4.0f, -1.5f, 0.0));
+//    model = glm::scale(model, glm::vec3(0.5f));
+//    shader.setMat4("model", model);
+//    renderCube();
+//    // light cube
+//    model = glm::mat4(1.0f);
+//    model = glm::translate(model, lightPos);
+//    model = glm::scale(model, glm::vec3(0.5f));
+//    shader.setMat4("model", model);
+//    renderCube();
 }
 
 // renderCube() renders a 1x1 3D cube in NDC.
@@ -685,3 +809,70 @@ unsigned int loadTexture(char const * path)
 
     return textureID;
 }
+
+//void drawInstanced(const Shader &shader){
+//    // generate a large list of semi-random model transformation matrices
+//    // ------------------------------------------------------------------
+//    unsigned int amount = 1000;
+//    glm::mat4* modelMatrices;
+//    modelMatrices = new glm::mat4[amount];
+//    srand(glfwGetTime()); // initialize random seed
+//    float radius = 150.0;
+//    float offset = 25.0f;
+//    for (unsigned int i = 0; i < amount; i++)
+//    {
+//        glm::mat4 model = glm::mat4(1.0f);
+//        // 1. translation: displace along circle with 'radius' in range [-offset, offset]
+//        float angle = (float)i / (float)amount * 360.0f;
+//        float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+//        float x = sin(angle) * radius + displacement;
+//        displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+//        float y = displacement * 0.4f; // keep height of asteroid field smaller compared to width of x and z
+//        displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+//        float z = cos(angle) * radius + displacement;
+//        model = glm::translate(model, glm::vec3(x, y, z));
+//
+//        // 2. scale: Scale between 0.05 and 0.25f
+//        float scale = (rand() % 20) / 100.0f + 0.05;
+//        model = glm::scale(model, glm::vec3(scale));
+//
+//        // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
+//        float rotAngle = (rand() % 360);
+//        model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
+//
+//        // 4. now add to list of matrices
+//        modelMatrices[i] = model;
+//    }
+//    // configure instanced array
+//    // -------------------------
+//    unsigned int buffer;
+//    glGenBuffers(1, &buffer);
+//    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+//    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+//
+//    // set transformation matrices as an instance vertex attribute (with divisor 1)
+//    // note: we're cheating a little by taking the, now publicly declared, VAO of the model's mesh(es) and adding new vertexAttribPointers
+//    // normally you'd want to do this in a more organized fashion, but for learning purposes this will do.
+//    // -----------------------------------------------------------------------------------------------------------------------------------
+//    for (unsigned int i = 0; i < rock.meshes.size(); i++)
+//    {
+//        unsigned int VAO = rock.meshes[i].VAO;
+//        glBindVertexArray(VAO);
+//        // set attribute pointers for matrix (4 times vec4)
+//        glEnableVertexAttribArray(3);
+//        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+//        glEnableVertexAttribArray(4);
+//        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+//        glEnableVertexAttribArray(5);
+//        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+//        glEnableVertexAttribArray(6);
+//        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+//
+//        glVertexAttribDivisor(3, 1);
+//        glVertexAttribDivisor(4, 1);
+//        glVertexAttribDivisor(5, 1);
+//        glVertexAttribDivisor(6, 1);
+//
+//        glBindVertexArray(0);
+//    }
+//}

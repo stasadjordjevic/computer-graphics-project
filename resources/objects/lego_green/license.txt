@@ -1,0 +1,11 @@
+Model Information:
+* title:	Lego Brick
+* source:	https://sketchfab.com/3d-models/lego-brick-17be4fc6dc624fbcb39d03a638d15ec5
+* author:	Miles.Carr (https://sketchfab.com/Miles.Carr)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Lego Brick" (https://sketchfab.com/3d-models/lego-brick-17be4fc6dc624fbcb39d03a638d15ec5) by Miles.Carr (https://sketchfab.com/Miles.Carr) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
