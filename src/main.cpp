@@ -34,29 +34,23 @@ bool shadowsKeyPressed = true;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-//TODO pozicija kamere da se nasteluje
-glm::vec3 carpetPosition = glm::vec3(1.0f, -2.52f, 0.0f);
+glm::vec3 carpetPosition = glm::vec3(1.0f, -2.53f, 0.0f);
 float carpetScale =15.0f;
+// ako je carpet model rug a ne kilim
+//glm::vec3 carpetPosition = glm::vec3(0.0f, -2.5f, 0.0f);
+//float carpetScale =4.2f;
 glm::vec3 bedPosition = glm::vec3(1.0f, -0.5f, -3.0f);
 float bedScale =1.9f;
 glm::vec3 closetPosition = glm::vec3(3.0f, -2.55f, 4.4f);
 float closetScale =1.9f;
 glm::vec3 lampPosition = glm::vec3(1.0f, 2.5f, 0.0f);
 float lampScale =1.0f;
-glm::vec3 doorPosition = glm::vec3(-3.0f, -2.6f, 4.65f);
-float doorScale =0.15f;
+glm::vec3 doorPosition = glm::vec3(-2.0f, -2.7f, 4.5f);
+float doorScale =0.2f;
 glm::vec3 boxPosition = glm::vec3(-6.0f, -2.6f, -3.0f);
 float boxScale =0.5f;
 glm::vec3 picturePosition = glm::vec3(-6.8f, 1.0f, 0.0f);
 float pictureScale =1.5f;
-
-glm::vec3 legoPosition = glm::vec3(7.1f, -2.0f, -4.5f);
-// dole desno: (7.1f, -2.0f, 4.5f);
-// gore desno: (7.1f, 2.0f, 4.5f);
-// gore levo: (7.1f, 2.0f, -4.5f);
-// dole levo: (7.1f, -2.0f, -4.5f);
-float legoScale =0.05f;
-
 bool ImGuiEnabled = false;
 bool CameraMouseMovementUpdateEnabled = true;
 
@@ -142,7 +136,8 @@ int main() {
     closetModel.SetShaderTextureNamePrefix("material.");
     Model lampModel("resources/objects/ceiling_lamp/scene.gltf"); //crveno iz nekog razloga
     lampModel.SetShaderTextureNamePrefix("material.");
-    Model carpetModel("resources/objects/kilim/scene.gltf"); //TODO probati sa rug, mora se promeniti pozicija i scale
+    Model carpetModel("resources/objects/kilim/scene.gltf");
+//    Model carpetModel("resources/objects/rug/scene.gltf");
     carpetModel.SetShaderTextureNamePrefix("material.");
     Model doorModel("resources/objects/stuff_in_my_room_door/scene.gltf");
     doorModel.SetShaderTextureNamePrefix("material.");
@@ -153,6 +148,8 @@ int main() {
 //    Model windowModel("resources/objects/w1/window/w1.obj"); //crveno sve
     Model pictureModel("resources/objects/donut_picture_frame/scene.gltf");
     pictureModel.SetShaderTextureNamePrefix("material.");
+//    Model pictureModel("resources/objects/window1/CW1a.obj");
+//    pictureModel.SetShaderTextureNamePrefix("material.");
 
     //---
 
@@ -316,6 +313,8 @@ int main() {
         simpleDepthShader.setVec3("lightPos", lightPos);
         renderScene(simpleDepthShader,lightPos);
 
+        //ako je carpet model rug a ne kilim
+//        renderModel(simpleDepthShader,carpetPosition,carpetScale, 2);
         renderModel(simpleDepthShader,carpetPosition,carpetScale, 0);
         carpetModel.Draw(simpleDepthShader);
         renderModel(simpleDepthShader,bedPosition,bedScale, 0);
@@ -371,6 +370,8 @@ int main() {
 
         // render carpet model
         glDisable(GL_CULL_FACE);
+        //ako je carpet model rug a ne kilim
+//        renderModel(modelShader,carpetPosition,carpetScale,2);
         renderModel(modelShader,carpetPosition,carpetScale,0);
         modelShader.setInt("reverse_normals", 1);
         carpetModel.Draw(modelShader);
@@ -567,6 +568,7 @@ void renderModel(const Shader &modelShader,glm::vec3 modelPosition,float modelSc
         model = glm::rotate(model,glm::radians(90.0f),glm::vec3(0.0f, -1.0f, 0.0f));
     }
     if(sc==4){
+        //picture
         model = glm::rotate(model,glm::radians(90.0f),glm::vec3(0.0f, 1.0f, 0.0f));
     }
 
