@@ -1,0 +1,11 @@
+Model Information:
+* title:	Cosmos Flower
+* source:	https://sketchfab.com/3d-models/cosmos-flower-a7b24492647640ab9c0efcd58995df7f
+* author:	Lassi Kaukonen (https://sketchfab.com/thesidekick)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Cosmos Flower" (https://sketchfab.com/3d-models/cosmos-flower-a7b24492647640ab9c0efcd58995df7f) by Lassi Kaukonen (https://sketchfab.com/thesidekick) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

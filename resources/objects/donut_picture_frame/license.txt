@@ -1,0 +1,11 @@
+Model Information:
+* title:	Donut Picture Frame
+* source:	https://sketchfab.com/3d-models/donut-picture-frame-82973941107c4ed2b45ca39b44f646e2
+* author:	Duznot (https://sketchfab.com/duz_vr)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Donut Picture Frame" (https://sketchfab.com/3d-models/donut-picture-frame-82973941107c4ed2b45ca39b44f646e2) by Duznot (https://sketchfab.com/duz_vr) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
