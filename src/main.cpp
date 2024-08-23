@@ -118,6 +118,10 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
+    //blending
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
     // build and compile shaders
     // -------------------------
 
@@ -360,6 +364,28 @@ int main() {
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
         modelShader.use();
 
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+        glFrontFace(GL_CW);
+
+
+        renderModel(modelShader,bedPosition,bedScale,0);
+        bedModel.Draw(modelShader);
+        renderModel(modelShader,carpetPosition,carpetScale,0);
+        carpetModel.Draw(modelShader);
+        renderModel(modelShader,doorPosition,doorScale,0);
+        doorModel.Draw(modelShader);
+        renderModel(modelShader,boxPosition,boxScale,2);
+        boxModel.Draw(modelShader);
+        renderModel(modelShader,closetPosition,closetScale,1);
+        closetModel.Draw(modelShader);
+        renderModel(modelShader,lampPosition,lampScale,0);
+        lampModel.Draw(modelShader);
+        renderModel(modelShader,picturePosition,pictureScale,4);
+        pictureModel.Draw(modelShader);
+
+
+/*
         // render bed model
         glDisable(GL_CULL_FACE);
         renderModel(modelShader,bedPosition,bedScale,0);
@@ -410,14 +436,14 @@ int main() {
         glEnable(GL_CULL_FACE);
         modelShader.setInt("reverse_normals", 0);
 
-        // render window model
+        // render picture model
         glDisable(GL_CULL_FACE);
         renderModel(modelShader,picturePosition,pictureScale,4);
         modelShader.setInt("reverse_normals", 1);
         pictureModel.Draw(modelShader);
         glEnable(GL_CULL_FACE);
         modelShader.setInt("reverse_normals", 0);
-
+*/
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap); //KOMENTAR 4. isto je i bez ove dve linije
 
