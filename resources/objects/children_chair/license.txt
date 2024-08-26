@@ -1,0 +1,8 @@
+Model Information:
+* title:	Children Chair
+* source:	https://sketchfab.com/3d-models/children-chair-dfd8781faeea400b87349e11a24da4f4
+* author:	JungleBird (https://sketchfab.com/junglebird)
+
+Model License:
+* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
+* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works

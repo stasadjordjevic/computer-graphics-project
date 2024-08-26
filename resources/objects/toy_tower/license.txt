@@ -1,0 +1,11 @@
+Model Information:
+* title:	Toy tower
+* source:	https://sketchfab.com/3d-models/toy-tower-e8cd528c627d4437bafd59b38df5313e
+* author:	Jonás (https://sketchfab.com/jonasaguilar)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Toy tower" (https://sketchfab.com/3d-models/toy-tower-e8cd528c627d4437bafd59b38df5313e) by Jonás (https://sketchfab.com/jonasaguilar) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

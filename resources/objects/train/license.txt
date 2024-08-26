@@ -1,0 +1,11 @@
+Model Information:
+* title:	Wooden Toy Train
+* source:	https://sketchfab.com/3d-models/wooden-toy-train-d296506ab0304cf5a5d24eb5ed9f0ba1
+* author:	SmolShadyStudios (https://sketchfab.com/SmolShadyStudios)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Wooden Toy Train" (https://sketchfab.com/3d-models/wooden-toy-train-d296506ab0304cf5a5d24eb5ed9f0ba1) by SmolShadyStudios (https://sketchfab.com/SmolShadyStudios) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <rg/Error.h>
 
 #include <learnopengl/filesystem.h>
 #include <learnopengl/shader.h>
@@ -20,9 +21,8 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 unsigned int loadTexture(const char *path);
-void renderScene(const Shader &shader,const glm::vec3& lightPos);
+void renderScene(const Shader &shader);
 void renderModel(const Shader &modelShader,glm::vec3 modelPosition,float modelScale,int sc);
 void renderCube();
 // settings
@@ -34,25 +34,29 @@ bool shadowsKeyPressed = true;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-glm::vec3 carpetPosition = glm::vec3(1.0f, -2.53f, 0.0f);
-float carpetScale =15.0f;
-// ako je carpet model rug a ne kilim
-//glm::vec3 carpetPosition = glm::vec3(0.0f, -2.5f, 0.0f);
-//float carpetScale =4.2f;
+glm::vec3 carpetPosition = glm::vec3(0.0f, -2.5f, 0.0f);
+float carpetScale =2.0f;  //4.0f;
 glm::vec3 bedPosition = glm::vec3(1.0f, -0.5f, -3.0f);
 float bedScale =1.9f;
 glm::vec3 closetPosition = glm::vec3(3.0f, -2.55f, 4.4f);
 float closetScale =1.9f;
-glm::vec3 lampPosition = glm::vec3(1.0f, 2.5f, 0.0f);
-float lampScale =1.0f;
+glm::vec3 lampPosition = glm::vec3(0.0f, 1.2f, 0.0f);
+float lampScale =2.0f;
 glm::vec3 doorPosition = glm::vec3(-2.0f, -2.7f, 4.5f);
 float doorScale =0.2f;
 glm::vec3 boxPosition = glm::vec3(-6.0f, -2.6f, -3.0f);
-float boxScale =0.5f;
+float boxScale =0.7f;
 glm::vec3 picturePosition = glm::vec3(-6.8f, 1.0f, 0.0f);
-float pictureScale =1.5f;
-bool ImGuiEnabled = false;
-bool CameraMouseMovementUpdateEnabled = true;
+float pictureScale =1.0f;
+glm::vec3 trainPosition = glm::vec3(-4.0f, -2.4f, -1.0f);
+float trainScale =0.15f;
+glm::vec3 hanoiPosition = glm::vec3(-4.0f, -2.4f, 2.0f);
+float hanoiScale =0.05f;
+glm::vec3 tablePosition = glm::vec3(0.0f, -2.4f, 0.0f);
+float tableScale =0.02f;
+glm::vec3 chairPosition = glm::vec3(1.0f, -2.4f, 0.0f);
+glm::vec3 chairPosition1 = glm::vec3(-1.0f, -2.4f, 0.0f);
+float chairScale =0.001f;
 
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
@@ -95,7 +99,6 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
-//    glfwSetKeyCallback(window, key_callback);
 
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -132,53 +135,50 @@ int main() {
 
     // load textures
     unsigned int wallTexture = loadTexture(FileSystem::getPath("resources/textures/wall_white.jpg").c_str());
+
     // load models
     // -----------
+    Model lampModel("resources/objects/light_bulb/scene.gltf");
     Model bedModel("resources/objects/children_bed/scene.gltf");
-    bedModel.SetShaderTextureNamePrefix("material.");
     Model closetModel("resources/objects/old_closet/scene.gltf");
-    closetModel.SetShaderTextureNamePrefix("material.");
-    Model lampModel("resources/objects/ceiling_lamp/scene.gltf"); //crveno iz nekog razloga
-    lampModel.SetShaderTextureNamePrefix("material.");
-    Model carpetModel("resources/objects/kilim/scene.gltf");
-//    Model carpetModel("resources/objects/rug/scene.gltf");
-    carpetModel.SetShaderTextureNamePrefix("material.");
+    Model carpetModel("resources/objects/rug/scene.gltf");
     Model doorModel("resources/objects/stuff_in_my_room_door/scene.gltf");
-    doorModel.SetShaderTextureNamePrefix("material.");
     Model boxModel("resources/objects/toy_box/scene.gltf");
-    boxModel.SetShaderTextureNamePrefix("material.");
     Model flowerModel("resources/objects/cosmos_flower/scene.gltf");
-    flowerModel.SetShaderTextureNamePrefix("material.");
-//    Model windowModel("resources/objects/w1/window/w1.obj"); //crveno sve
     Model pictureModel("resources/objects/donut_picture_frame/scene.gltf");
-    pictureModel.SetShaderTextureNamePrefix("material.");
-//    Model pictureModel("resources/objects/window1/CW1a.obj");
-//    pictureModel.SetShaderTextureNamePrefix("material.");
+    Model trainModel("resources/objects/train/scene.gltf");
+    Model hanoiModel("resources/objects/toy_tower/scene.gltf");
+    Model tableModel("resources/objects/children_table/scene.gltf");
+    Model chairModel("resources/objects/children_chair/scene.gltf");
+//    for (auto& textures : trainModel.textures_loaded) {
+//        LOG(std::cerr) << textures.path << ' ' << textures.type << '\n';
+//    }
+
 
     //---
 
     // generate a large list of semi-random model transformation matrices
     // ------------------------------------------------------------------
-    unsigned int amount = 100; // change amount
+    unsigned int amount = 95; // change amount
     glm::mat4* modelMatrices;
     modelMatrices = new glm::mat4[amount];
     float y_limit = 2.0f;
-    float z_limit = 4.5f;
+    float z_limit = 4.6f;
     int index = 0;
     float y_offset = (y_limit*2)/9;
     float z_offset = (z_limit*2)/9;
-// dole desno: (7.1f, -2.0f, 4.5f);
-// gore desno: (7.1f, 2.0f, 4.5f);
-// gore levo: (7.1f, 2.0f, -4.5f);
-// dole levo: (7.1f, -2.0f, -4.5f);
+    int row = 0;
     for(float i=-y_limit;i<=y_limit;i+=y_offset){
         for(float j=-z_limit;j<=z_limit;j+=z_offset){
             glm::mat4 model = glm::mat4(1.0f);
             float x = 7.1f;
             float y = i;
             float z = j;
-            if((index/10)%2==0){
+            if(row%2==0){
                 z+= z_offset/2;
+            }
+            if(z>z_limit){
+                continue;
             }
             model = glm::translate(model, glm::vec3(x, y, z));
             float scale = 0.05f;
@@ -187,6 +187,7 @@ int main() {
             modelMatrices[index] = model;
             index++;
         }
+        row++;
     }
     // configure instanced array
     // -------------------------
@@ -220,17 +221,6 @@ int main() {
 
         glBindVertexArray(0);
     }
-//----
-
-    PointLight pointLight;
-    pointLight.position = glm::vec3(0.0f, 1.0, 0.0);
-    pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(1.0, 1.0, 1.0);
-    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
-
-    pointLight.constant = 1.0f;
-    pointLight.linear = 0.09f;
-    pointLight.quadratic = 0.032f;
 
     // configure depth map FBO
     // -----------------------
@@ -293,11 +283,8 @@ int main() {
         float near_plane = 1.0f;
         float far_plane = 25.0f;
         glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT, near_plane, far_plane);
-        std::vector<glm::mat4> shadowTransforms; //ovde se nalaze svih 6 transformacija koje transformisu u koordinate prostora svetla
-        //lookAt matrica je jedinstvena za svaku stranu (view matrica) -> pozicija kamere, tacka u koju kamera gleda i vektor na gore
-        // pozicija je uvek ista, za svaku stranu
-        // menja se tacka u koju gledamo - to ce biti centar svake strane cubemape
-        // vektor na gore isto zavisi od strane do strane
+        std::vector<glm::mat4> shadowTransforms;
+
         shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
         shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
         shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
@@ -315,25 +302,32 @@ int main() {
             simpleDepthShader.setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
         simpleDepthShader.setFloat("far_plane", far_plane);
         simpleDepthShader.setVec3("lightPos", lightPos);
-        renderScene(simpleDepthShader,lightPos);
+        renderScene(simpleDepthShader);
 
-        //ako je carpet model rug a ne kilim
-//        renderModel(simpleDepthShader,carpetPosition,carpetScale, 2);
-        renderModel(simpleDepthShader,carpetPosition,carpetScale, 0);
+        renderModel(simpleDepthShader,carpetPosition,carpetScale, 2);
         carpetModel.Draw(simpleDepthShader);
+        renderModel(simpleDepthShader,lampPosition,lampScale,1);
+        lampModel.Draw(simpleDepthShader);
         renderModel(simpleDepthShader,bedPosition,bedScale, 0);
         bedModel.Draw(simpleDepthShader);
         renderModel(simpleDepthShader,closetPosition,closetScale,1);
         closetModel.Draw(simpleDepthShader);
-        renderModel(simpleDepthShader,lampPosition,lampScale,0);
-        lampModel.Draw(simpleDepthShader);
         renderModel(simpleDepthShader,doorPosition,doorScale,0);
         doorModel.Draw(simpleDepthShader);
         renderModel(simpleDepthShader,boxPosition,boxScale,2);
         boxModel.Draw(simpleDepthShader);
         renderModel(simpleDepthShader, picturePosition, pictureScale, 4);
         pictureModel.Draw(simpleDepthShader);
-
+        renderModel(simpleDepthShader, trainPosition,trainScale, 0);
+        trainModel.Draw(simpleDepthShader);
+        renderModel(simpleDepthShader, hanoiPosition,hanoiScale, 1);
+        hanoiModel.Draw(simpleDepthShader);
+        renderModel(simpleDepthShader, tablePosition,tableScale, 1);
+        tableModel.Draw(simpleDepthShader);
+        renderModel(simpleDepthShader, chairPosition,chairScale, 3);
+        chairModel.Draw(simpleDepthShader);
+        renderModel(simpleDepthShader, chairPosition1,chairScale, 2);
+        chairModel.Draw(simpleDepthShader);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // 2. render scene as normal
@@ -355,23 +349,50 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, wallTexture);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-        renderScene(shader,lightPos);
+        renderScene(shader);
 
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+        // set model shader uniforms
         modelShader.use();
+        PointLight pointLight;
+        pointLight.position = lightPos;
+        pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
+        pointLight.diffuse = glm::vec3(1.0, 1.0, 1.0);
+        pointLight.specular = glm::vec3(0.0, 0.0, 0.0);
+        pointLight.constant = 1.0f;
+        pointLight.linear = 0.09f;
+        pointLight.quadratic = 0.032f;
+        modelShader.setInt("shadows", shadows); // enable/disable shadows by pressing 'SPACE'
+        modelShader.setFloat("far_plane", far_plane);
+        modelShader.setVec3("pointLight.position", pointLight.position);
+        modelShader.setVec3("pointLight.ambient", pointLight.ambient);
+        modelShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        modelShader.setVec3("pointLight.specular", pointLight.specular);
+        modelShader.setFloat("pointLight.constant", pointLight.constant);
+        modelShader.setFloat("pointLight.linear", pointLight.linear);
+        modelShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+        modelShader.setVec3("viewPosition", camera.Position);
+        modelShader.setFloat("material.shininess", 32.0f);
+        // view/projection transformations
+        modelShader.setMat4("projection", projection);
+        modelShader.setMat4("view", view);
+        modelShader.setInt("depthMap", 1);
 
+        // face culling
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
         glFrontFace(GL_CW);
 
 
+        renderModel(modelShader,lampPosition,lampScale,1);
+        lampModel.Draw(modelShader);
         renderModel(modelShader,bedPosition,bedScale,0);
         bedModel.Draw(modelShader);
-        renderModel(modelShader,carpetPosition,carpetScale,0);
+        renderModel(modelShader,carpetPosition,carpetScale,2);
         carpetModel.Draw(modelShader);
         renderModel(modelShader,doorPosition,doorScale,0);
         doorModel.Draw(modelShader);
@@ -379,73 +400,21 @@ int main() {
         boxModel.Draw(modelShader);
         renderModel(modelShader,closetPosition,closetScale,1);
         closetModel.Draw(modelShader);
-        renderModel(modelShader,lampPosition,lampScale,0);
-        lampModel.Draw(modelShader);
         renderModel(modelShader,picturePosition,pictureScale,4);
         pictureModel.Draw(modelShader);
+        renderModel(modelShader,trainPosition,trainScale,0);
+        trainModel.Draw(modelShader);
+        renderModel(modelShader,hanoiPosition,hanoiScale,1);
+        hanoiModel.Draw(modelShader);
+        renderModel(modelShader,tablePosition,tableScale,1);
+        tableModel.Draw(modelShader);
+        renderModel(modelShader,chairPosition,chairScale,3);
+        chairModel.Draw(modelShader);
+        renderModel(modelShader,chairPosition1,chairScale,2);
+        chairModel.Draw(modelShader);
 
-
-/*
-        // render bed model
-        glDisable(GL_CULL_FACE);
-        renderModel(modelShader,bedPosition,bedScale,0);
-        modelShader.setInt("reverse_normals", 1);
-        bedModel.Draw(modelShader);
-        glEnable(GL_CULL_FACE);
-        modelShader.setInt("reverse_normals", 0);
-
-        // render carpet model
-        glDisable(GL_CULL_FACE);
-        //ako je carpet model rug a ne kilim
-//        renderModel(modelShader,carpetPosition,carpetScale,2);
-        renderModel(modelShader,carpetPosition,carpetScale,0);
-        modelShader.setInt("reverse_normals", 1);
-        carpetModel.Draw(modelShader);
-        glEnable(GL_CULL_FACE);
-        modelShader.setInt("reverse_normals", 0);
-
-        // render door model
-        glDisable(GL_CULL_FACE);
-        renderModel(modelShader,doorPosition,doorScale,0);
-        modelShader.setInt("reverse_normals", 1);
-        doorModel.Draw(modelShader);
-        glEnable(GL_CULL_FACE);
-        modelShader.setInt("reverse_normals", 0);
-
-        // render box model
-        glDisable(GL_CULL_FACE);
-        renderModel(modelShader,boxPosition,boxScale,2);
-        modelShader.setInt("reverse_normals", 1);
-        boxModel.Draw(modelShader);
-        glEnable(GL_CULL_FACE);
-        modelShader.setInt("reverse_normals", 0);
-
-        //render closet model
-        glDisable(GL_CULL_FACE);
-        modelShader.setInt("reverse_normals", 1);
-        renderModel(modelShader,closetPosition,closetScale,1);
-        closetModel.Draw(modelShader);
-        glEnable(GL_CULL_FACE);
-        modelShader.setInt("reverse_normals", 0);
-
-        //render lamp model
-        renderModel(modelShader,lampPosition,lampScale,0);
-        glDisable(GL_CULL_FACE);
-        modelShader.setInt("reverse_normals", 1);
-        lampModel.Draw(modelShader);
-        glEnable(GL_CULL_FACE);
-        modelShader.setInt("reverse_normals", 0);
-
-        // render picture model
-        glDisable(GL_CULL_FACE);
-        renderModel(modelShader,picturePosition,pictureScale,4);
-        modelShader.setInt("reverse_normals", 1);
-        pictureModel.Draw(modelShader);
-        glEnable(GL_CULL_FACE);
-        modelShader.setInt("reverse_normals", 0);
-*/
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap); //KOMENTAR 4. isto je i bez ove dve linije
+        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
         //----
         instancingShader.use();
@@ -527,88 +496,43 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     camera.ProcessMouseScroll(yoffset);
 }
 
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
-        ImGuiEnabled = !ImGuiEnabled;
-        if (ImGuiEnabled) {
-            CameraMouseMovementUpdateEnabled = false;
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        } else {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        }
-    }
-}
-
-
 void renderModel(const Shader &modelShader,glm::vec3 modelPosition,float modelScale,int sc)
 {
-    float near_plane = 1.0f;
-    float far_plane = 25.0f;
     glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
-
-    PointLight pointLight;
-    pointLight.position = glm::vec3(0.0f, 1.0, 0.0);
-    pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(1.0, 1.0, 1.0);
-    pointLight.specular = glm::vec3(0.0, 0.0, 0.0);
-
-
-    pointLight.constant = 1.0f;
-    pointLight.linear = 0.09f;
-    pointLight.quadratic = 0.032f;
-    modelShader.setInt("shadows", shadows); // enable/disable shadows by pressing 'SPACE'
-    modelShader.setFloat("far_plane", far_plane);
-    pointLight.position = lightPos; //glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
-    modelShader.setVec3("pointLight.position", pointLight.position);
-    modelShader.setVec3("pointLight.ambient", pointLight.ambient);
-    modelShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-    modelShader.setVec3("pointLight.specular", pointLight.specular);
-    modelShader.setFloat("pointLight.constant", pointLight.constant);
-    modelShader.setFloat("pointLight.linear", pointLight.linear);
-    modelShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-    modelShader.setVec3("viewPosition", camera.Position);
-    modelShader.setFloat("material.shininess", 32.0f);
-    // view/projection transformations
-    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom),
-                                  (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
-    glm::mat4 view = camera.GetViewMatrix();
-    modelShader.setMat4("projection", projection);
-    modelShader.setMat4("view", view);
-    modelShader.setInt("depthMap", 1);
-
     // render the loaded model
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model,
-                           modelPosition); // translate it down so it's at the center of the scene
+                           modelPosition);
     if(sc==1){
         //closet
         model = glm::rotate(model,glm::radians(90.0f),glm::vec3(-1.0f, 0.0f, 0.0f));
     }
     if(sc==2){
-        //box
+        //box, chair2
         model = glm::rotate(model,glm::radians(90.0f),glm::vec3(-1.0f, 0.0f, 0.0f));
         model = glm::rotate(model,glm::radians(90.0f),glm::vec3(0.0f, 0.0f, 1.0f));
 
     }
     if(sc==3){
-        model = glm::rotate(model,glm::radians(90.0f),glm::vec3(0.0f, -1.0f, 0.0f));
+        //chair1
+        model = glm::rotate(model,glm::radians(90.0f),glm::vec3(-1.0f, 0.0f, 0.0f));
+        model = glm::rotate(model,glm::radians(90.0f),glm::vec3(0.0f, 0.0f, -1.0f));
     }
     if(sc==4){
         //picture
         model = glm::rotate(model,glm::radians(90.0f),glm::vec3(0.0f, 1.0f, 0.0f));
     }
-
-    model = glm::scale(model, glm::vec3(modelScale));    // it's a bit too big for our scene, so scale it down
+    model = glm::scale(model, glm::vec3(modelScale));
     modelShader.setMat4("model", model);
 }
 
 // renders the 3D scene
 // --------------------
-void renderScene(const Shader &shader, const glm::vec3& lightPos)
+void renderScene(const Shader &shader)
 {
     // room cube
     glm::mat4 model = glm::mat4(1.0f);
-// scale to have lower height of the room
+    // scale to have lower height of the room
     glm::vec3 scaleFactors = glm::vec3(7.0f, 2.5f, 5.0f);
     model = glm::scale(model, scaleFactors);
     shader.setMat4("model", model);

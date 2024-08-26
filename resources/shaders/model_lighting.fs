@@ -16,7 +16,8 @@ struct PointLight {
 struct Material {
     sampler2D texture_diffuse1;
     sampler2D texture_specular1;
-
+//     sampler2D texture_normal1;
+//     sampler2D texture_metallic1;
     float shininess;
 };
 in vec2 TexCoords;
@@ -47,7 +48,6 @@ float ShadowCalculation(vec3 fragPos)
     float shadow = currentDepth -  bias > closestDepth ? 1.0 : 0.0;
     // display closestDepth as debug (to visualize depth cubemap)
     // FragColor = vec4(vec3(closestDepth / far_plane), 1.0);
-
     return shadow;
 }
 // calculates the color when using a point light.
@@ -56,9 +56,6 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     vec3 lightDir = normalize(light.position - fragPos);
     // diffuse shading
     float diff = max(dot(normal, lightDir), 0.0);
-    // specular shading
-//     vec3 reflectDir = reflect(-lightDir, normal);
-//     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     // attenuation
     float distance = length(light.position - fragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
@@ -67,10 +64,11 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, TexCoords));
 
     vec3 halfwayDir = normalize(lightDir + viewDir);
+    // blinn-phong
     float spec = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
     vec3 specular = light.specular * spec * texture(material.texture_specular1, TexCoords).xxx;
 
-    attenuation=1.0; //nemam slabljenje da mi ne bi bili pretamni modeli
+    attenuation=1.0; //TODO videti da li da ostavim ovako ili zakomentarisem ovu liniju, neki modeli su pretamni kad imam slabljenje
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
